@@ -28,6 +28,7 @@ public class ThreadSignalRService: IAsyncDisposable
         var hubUrl = $"{_appsettingsService.ServerUrl}/threadHub";
         
         _hubConnection = new HubConnectionBuilder()
+            .WithAutomaticReconnect()
             .WithUrl(hubUrl)
             .Build();
 
