@@ -2,6 +2,7 @@
 @using LLMLab.Client.Services
 @using Markdig
 @inherits MessagePartComponent
+@inject IJSRuntime JSRuntime
 
 <div class="markdown-content">
     @(MarkdownContent)@(TokenParsing)@(TokenGenerating)
@@ -56,7 +57,10 @@
                 var pipeline = new MarkdownPipelineBuilder()
                     .UseAdvancedExtensions()
                     .Build();
-                MarkdownContent = (MarkupString)Markdown.ToHtml(replacedString, pipeline);
+                var markdownString = Markdown.ToHtml(replacedString, pipeline);
+                // add latex support
+                markdownString = await RenderLatex(markdownString);
+                MarkdownContent = (MarkupString)markdownString;
                 TokenParsing = "";
                 await Task.Yield();
             }
@@ -75,6 +79,24 @@
             TokenParsing = Content;
             TokenGenerating = "";
         }
+    }
+
+    private async Task<string> RenderLatex(string markdownString)
+    {
+        // parse down latex from <span class="math">\(\sum_{k=0}^n k = \frac{n(n+1)}{2}\)</span>
+        var latexPattern = @"<span class=""math"">\\\((.*?)\\\)</span>";
+        var regex = new System.Text.RegularExpressions.Regex(latexPattern);
+        var matches = regex.Matches(markdownString);
+        foreach (System.Text.RegularExpressions.Match match in matches)
+        {
+            var latexContent = match.Groups[1].Value;
+            // render using JS Interop to Katex
+            var parsedLatex = await JSRuntime.InvokeAsync<string>("renderLatex", latexContent);
+            // replace the match with the rendered HTML
+            var latexHtml = $"<span class=\"math\" data-latex=\"{parsedLatex}\">{parsedLatex}</span>";
+            markdownString = markdownString.Replace(match.Value, latexHtml);
+        }
+        return markdownString;
     }
 
     public override async Task OnTokenReceived(string fullContent)

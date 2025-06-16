@@ -246,3 +246,23 @@ window.getHighlightedHtml = function(code, language) {
         return code;
     }
 }
+
+
+window.renderLatex = function(content) {
+    if (typeof katex === 'undefined') {
+        console.warn('KaTeX is not loaded');
+        return;
+    }
+    // Render the LateX string as HTML
+    try {
+        var html = katex.renderToString(content, {
+            throwOnError: false,
+            output: 'html',
+            displayMode: true // Display as block
+        });
+        // Insert the rendered HTML into the page
+        return html;
+    } catch (error) {
+        console.error('Error rendering LaTeX:', error);
+    }
+}
