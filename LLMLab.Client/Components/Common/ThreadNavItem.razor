@@ -236,5 +236,11 @@
         
         // Update backend
         await ThreadSyncService.UpdateThread(cache);
+        
+        // If this was the current thread, navigate to default page
+        if (IsActive)
+        {
+            NavigationManager.NavigateTo("/");
+        }
     }
 } 
