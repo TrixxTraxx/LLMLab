@@ -181,6 +181,8 @@ public class MessageSyncService
         
         _messageCaches[sentMessage.Id] = cache;
         
+        cache.OnUpdated.Invoke();
+        
         // Store in local storage
         await _storageService.StoreObjectAsync($"MessageCache_{sentMessage.Id}", cache);
         

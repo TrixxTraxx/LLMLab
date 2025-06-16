@@ -3,11 +3,10 @@
 @inherits MessagePartComponent
 @using LLMLab.Client.Caches
 @using LLMLab.Client.Services
-@implements IDisposable
 
 <div class="code-block-container" id="@ContainerId">
     <pre class="code-block" id="@ElementId">
-        <code>@((MarkupString)_displayContent)</code>
+        <code>@((MarkupString)HighlightedContent)@(TokenParsing)@(TokenGenerating)</code>
     </pre>
     <button class="copy-code-button" @onclick="CopyCode" title="Copy code">
         <svg viewBox="0 0 24 24" fill="currentColor">
@@ -23,131 +22,84 @@
     [Parameter] public string Content { get; set; } = string.Empty;
     [Parameter] public string? Language { get; set; }
 
-    private string _displayContent = string.Empty;
-    private string _lastHighlightedContent = string.Empty;
-    private DateTime _lastHighlightTime = DateTime.MinValue;
-    private bool _isStreaming = false;
-    private System.Threading.Timer? _finalHighlightTimer;
-    private const int HIGHLIGHT_INTERVAL_MS = 500; // Highlight every 500ms during streaming
-    private const int CONTENT_CHUNK_SIZE = 100; // Highlight after 100 new characters
+    public string HighlightedContent = "";
+    
+    // The Tokens currently being parsed by syntax highlighter
+    public string TokenParsing = "";
+    public string LastContentBeforeParsing = "";
+    // The Tokens generated since the last parsing
+    public string TokenGenerating = "";
+    
+    public Task? HighlightContentTask;
+    public Action? NextHighlightContentTask;
 
     protected override void OnInitialized()
     {
-        _displayContent = SanitationHelper.SanitizeHtml(Content);
-        _lastHighlightedContent = Content;
-    }
-    
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            if (!string.IsNullOrWhiteSpace(Content))
-            {
-                await HighlightContent();
-            }
-        }
+        InitializeHighlightedContent();
     }
 
+    private void InitializeHighlightedContent()
+    {
+        if(HighlightContentTask != null && !HighlightContentTask.IsCompleted)
+        {
+            NextHighlightContentTask = () =>
+            {
+                HighlightContentTask = InitializeHighlightedContentTask();
+            };
+            return;
+        }
+        HighlightContentTask = InitializeHighlightedContentTask();
+    }
+
+    private async Task InitializeHighlightedContentTask()
+    {
+        try
+        {
+            TokenParsing = Content.Substring(LastContentBeforeParsing.Length);
+            LastContentBeforeParsing = Content;
+            TokenGenerating = "";
+            
+            if (!string.IsNullOrEmpty(Content))
+            {
+                var highlightedHtml = await JSRuntime.InvokeAsync<string>("getHighlightedHtml", Content);
+                
+                if (!string.IsNullOrEmpty(highlightedHtml))
+                {
+                    HighlightedContent = SanitationHelper.SanitizeHtml(highlightedHtml);
+                    TokenParsing = ""; 
+                }
+                else
+                {
+                    // Fallback to plain sanitized content if highlighting fails
+                }
+                StateHasChanged();
+                await Task.Yield();
+            }
+            
+            if(NextHighlightContentTask != null)
+            {
+                var nextTask = NextHighlightContentTask;
+                NextHighlightContentTask = null;
+                nextTask.Invoke();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error processing code highlighting: {ex.Message}");
+            // Fallback: render without syntax highlighting
+            HighlightedContent = "";
+            TokenParsing = Content;
+            TokenGenerating = "";
+        }
+    }
 
     public override async Task OnTokenReceived(string fullContent)
     {
         Content = fullContent;
-        _isStreaming = true;
-        
-        // Determine if we should highlight now
-        var shouldHighlight = ShouldHighlightNow();
-        
-        if (shouldHighlight)
-        {
-            // Highlight and update display
-            await HighlightContent();
-        }
-        else
-        {
-            // Only show plain text if we don't have a recent highlighted version
-            // This prevents the flash when we have highlighted content that's still mostly valid
-            if (string.IsNullOrEmpty(_lastHighlightedContent) || 
-                Content.Length - _lastHighlightedContent.Length > CONTENT_CHUNK_SIZE * 2)
-            {
-                _displayContent = SanitationHelper.SanitizeHtml(Content);
-                StateHasChanged();
-            }
-        }
-        
-        // Cancel any pending final highlight timer
-        _finalHighlightTimer?.Dispose();
-        
-        // Set a timer for final highlighting when streaming stops
-        _finalHighlightTimer = new System.Threading.Timer(async _ => await FinalHighlight(), null, 1000, Timeout.Infinite);
-    }
-
-    private bool ShouldHighlightNow()
-    {
-        // Always highlight if we haven't highlighted yet
-        if (string.IsNullOrEmpty(_lastHighlightedContent))
-            return true;
-        
-        // Highlight if enough time has passed
-        if ((DateTime.Now - _lastHighlightTime).TotalMilliseconds >= HIGHLIGHT_INTERVAL_MS)
-            return true;
-        
-        // Highlight if enough new content has been added
-        if (Content.Length - _lastHighlightedContent.Length >= CONTENT_CHUNK_SIZE)
-            return true;
-        
-        return false;
-    }
-
-    private async Task HighlightContent()
-    {
-        try
-        {
-            if (!string.IsNullOrWhiteSpace(Content))
-            {
-                var highlightedHtml = await JSRuntime.InvokeAsync<string>("getHighlightedHtml", Content);
-                
-
-                if (!string.IsNullOrEmpty(highlightedHtml))
-                {
-                    _displayContent = SanitationHelper.SanitizeHtml(highlightedHtml);
-                    _lastHighlightedContent = Content;
-                    _lastHighlightTime = DateTime.Now;
-                    StateHasChanged();
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error highlighting code: {ex.Message}");
-            // Fallback to plain text if highlighting fails
-            _displayContent = SanitationHelper.SanitizeHtml(Content);
-            StateHasChanged();
-        }
-    }
-
-    private async Task FinalHighlight()
-    {
-        try
-        {
-            await InvokeAsync(async () =>
-            {
-                _isStreaming = false;
-                
-                // Only highlight if content has changed since last highlight
-                if (_lastHighlightedContent != Content)
-                {
-                    await HighlightContent();
-                }
-            });
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error in final highlight: {ex.Message}");
-        }
-        finally
-        {
-            _finalHighlightTimer?.Dispose();
-        }
+        TokenGenerating = fullContent.Substring(LastContentBeforeParsing.Length);
+        InitializeHighlightedContent();
+        // Only re-render this component when regular tokens are received
+        StateHasChanged();
     }
 
     private async Task CopyCode()
@@ -162,10 +114,5 @@
             Console.WriteLine($"Failed to copy code: {ex.Message}");
             Snackbar.Add("Failed to copy code", Severity.Error);
         }
-    }
-
-    public void Dispose()
-    {
-        _finalHighlightTimer?.Dispose();
     }
 } 

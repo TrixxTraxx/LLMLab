@@ -54,6 +54,7 @@ public class GenerationService : IAsyncDisposable
 
     public async Task ConnectAsync(MessageCache cache)
     {
+        Console.WriteLine("Connecting to Message hub with MessageId: " + cache.Message.Id);
         if (_hubConnection != null)
         {
             await DisconnectAsync();
@@ -65,6 +66,7 @@ public class GenerationService : IAsyncDisposable
         
         _hubConnection = new HubConnectionBuilder()
             .WithUrl(hubUrl)
+            .WithAutomaticReconnect()
             .Build();
 
         // Set up event handlers
@@ -116,8 +118,8 @@ public class GenerationService : IAsyncDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to connect to Hub: {ex.Message}");
-            throw;
+            Console.WriteLine($"Failed to connect to Hub:");
+            Console.WriteLine(ex);
         }
     }
 

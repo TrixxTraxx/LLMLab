@@ -124,6 +124,7 @@
     [Parameter] public EventCallback OnContentChanged { get; set; }
     [CascadingParameter(Name = "User")] public UserDto? User { get; set; }
 
+    private bool isHubConnected = false;
     private List<AiModelDto> aiModels = new List<AiModelDto>();
 
     protected override async Task OnInitializedAsync()
@@ -135,6 +136,7 @@
             
             if (!Message.Message.Complete && Message.Message.Id != 0)
             {
+                isHubConnected = true;
                 await GenerationService.StartGenerationSession(Message);
             }
         }
@@ -145,24 +147,21 @@
         }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!Message.Message.Complete && Message.Message.Id != 0 && !GenerationService.IsConnected)
-        {
-            await GenerationService.StartGenerationSession(Message);
-        }
-    }
-
     private void OnMessageUpdated()
     {
-        InvokeAsync(() =>
+        InvokeAsync(async () =>
         {
             try
             {
+                if (!Message.Message.Complete && Message.Message.Id != 0 && !GenerationService.IsConnected && !isHubConnected)
+                {
+                    isHubConnected = true;
+                    await GenerationService.StartGenerationSession(Message);
+                }
                 //force C# to rerender the message entirely
                 Message.RenderKey++;
                 StateHasChanged();
-                OnContentChanged.InvokeAsync();
+                await OnContentChanged.InvokeAsync();
             }
             catch (Exception ex)
             {
