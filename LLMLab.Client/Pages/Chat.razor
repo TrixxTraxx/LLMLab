@@ -142,7 +142,6 @@
             }
 
             isLoading = false;
-            StateHasChanged();
         }
         else
         {
@@ -150,7 +149,6 @@
             currentBranch = new List<MessageCache>();
             currentBranchPath = 0;
             isLoading = false;
-            StateHasChanged();
         }
         _ = Task.Run((Func<Task>) (async() =>
         {
@@ -176,7 +174,6 @@
         if (string.IsNullOrWhiteSpace(message.Text)) return;
 
         isSending = true;
-        //StateHasChanged();
         
         message.ThreadId = ThreadId ?? 0;
         message.PreviousMessageId = currentBranchPath;
@@ -207,7 +204,6 @@
         }
 
         isSending = false;
-        StateHasChanged();
     }
 
     private void HandleAttachment(ChatAttachment attachment)

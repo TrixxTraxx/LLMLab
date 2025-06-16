@@ -23,4 +23,8 @@ public class MessageCache
     
     [IgnoreMember]
     public Action<string> OnGenerate { get; set; } = (output) => { };
+    
+    //unique render id
+    [IgnoreMember]
+    public int RenderId { get; set; } = Random.Shared.Next();
 }

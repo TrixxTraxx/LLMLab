@@ -133,14 +133,23 @@
             Message.OnUpdated += OnMessageUpdated;
             aiModels = await AiModelService.GetAiModels();
             
-            if (!Message.Message.Complete)
+            if (!Message.Message.Complete && Message.Message.Id != 0)
             {
                 await GenerationService.StartGenerationSession(Message);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to load Chat Message: {ex.Message}");
+            Console.WriteLine($"Failed to load Chat Message:");
+            Console.WriteLine(ex);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!Message.Message.Complete && Message.Message.Id != 0 && !GenerationService.IsConnected)
+        {
+            await GenerationService.StartGenerationSession(Message);
         }
     }
 
@@ -148,10 +157,17 @@
     {
         InvokeAsync(() =>
         {
-            //force C# to rerender the message entirely
-            Message.RenderKey++;
-            StateHasChanged();
-            OnContentChanged.InvokeAsync();
+            try
+            {
+                //force C# to rerender the message entirely
+                Message.RenderKey++;
+                StateHasChanged();
+                OnContentChanged.InvokeAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating message: {ex.Message}");
+            }
         });
     }
 
