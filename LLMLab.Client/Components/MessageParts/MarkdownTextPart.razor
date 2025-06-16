@@ -53,7 +53,9 @@
             {
                 //escape script tags
                 var replacedString = SanitationHelper.SanitizeHtml(LastContentBeforeParsing);
-                var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+                var pipeline = new MarkdownPipelineBuilder()
+                    .UseAdvancedExtensions()
+                    .Build();
                 MarkdownContent = (MarkupString)Markdown.ToHtml(replacedString, pipeline);
                 TokenParsing = "";
                 await Task.Yield();
