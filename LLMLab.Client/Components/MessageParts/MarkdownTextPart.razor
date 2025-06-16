@@ -4,7 +4,7 @@
 @inherits MessagePartComponent
 
 <div class="markdown-content">
-    @(MarkdownContent)
+    @(MarkdownContent)@(TokenParsing)@(TokenGenerating)
 </div>
 
 @code {
@@ -12,6 +12,15 @@
     [Parameter] public string Content { get; set; } = string.Empty;
 
     public MarkupString MarkdownContent;
+
+    // The Tokens currently being parsed by Markdig
+    public string TokenParsing = "";
+    public string LastContentBeforeParsing = "";
+    // The Tokens generated since the last parsing
+    public string TokenGenerating = "";
+    
+    public Task? MarkdownContentTask;
+    public Action? NextMarkdownContentTask;
 
 
     protected override void OnInitialized()
@@ -21,18 +30,55 @@
 
     private void InitializeMarkdownContent()
     {
-        if (!string.IsNullOrEmpty(Content))
+        if(MarkdownContentTask != null && !MarkdownContentTask.IsCompleted)
         {
-            //escape script tags
-            var replacedString = SanitationHelper.SanitizeHtml(Content);
-            //Console.WriteLine("Parse Markdown content: " + Content);
-            MarkdownContent = (MarkupString)Markdown.ToHtml(replacedString);
+            NextMarkdownContentTask = () =>
+            {
+                MarkdownContentTask = InitializeMarkdownContentTask();
+            };
+            return;
+        }
+        MarkdownContentTask = InitializeMarkdownContentTask();
+    }
+
+    private async Task InitializeMarkdownContentTask()
+    {
+        try
+        {
+            TokenParsing = Content.Substring(LastContentBeforeParsing.Length);
+            LastContentBeforeParsing = Content;
+            TokenGenerating = "";
+            
+            if (!string.IsNullOrEmpty(Content))
+            {
+                //escape script tags
+                var replacedString = SanitationHelper.SanitizeHtml(LastContentBeforeParsing);
+                var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+                MarkdownContent = (MarkupString)Markdown.ToHtml(replacedString, pipeline);
+                TokenParsing = "";
+                await Task.Yield();
+            }
+            if(NextMarkdownContentTask != null)
+            {
+                var nextTask = NextMarkdownContentTask;
+                NextMarkdownContentTask = null;
+                nextTask.Invoke();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error processing markdown content: {ex.Message}");
+            //Fallback: render without markdown processing
+            MarkdownContent = (MarkupString)"";
+            TokenParsing = Content;
+            TokenGenerating = "";
         }
     }
 
     public override async Task OnTokenReceived(string fullContent)
     {
         Content = fullContent;
+        TokenGenerating = fullContent.Substring(LastContentBeforeParsing.Length);
         InitializeMarkdownContent();
         // Only re-render this component when regular tokens are received
         StateHasChanged();
