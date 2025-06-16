@@ -4,6 +4,7 @@
 @inject ThreadSyncService ThreadSyncService
 @inject IJSRuntime JSRuntime
 @inject ISnackbar Snackbar
+@inject HttpClient HttpClient
 
 <a href="@($"/chat/{Cache.Thread.Id}")"
    class="thread-nav-link @(IsActive ? "active" : "")"
@@ -258,8 +259,25 @@
 
     private async Task ShareThread()
     {
-        var url = NavigationManager.BaseUri.TrimEnd('/') + $"/chat/{Cache.Thread.Id}";
-        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", url);
-        Snackbar.Add("Link copied!", Severity.Success);
+        try
+        {
+            var response = await HttpClient.PostAsync($"api/SharedChat/{Cache.Thread.Id}", null);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var url = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("url").GetString();
+                var fullUrl = NavigationManager.BaseUri.TrimEnd('/') + url;
+                await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", fullUrl);
+                Snackbar.Add("Shareable link copied!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Failed to create shareable link.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
     }
 } 
