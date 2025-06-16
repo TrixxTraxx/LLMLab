@@ -258,7 +258,7 @@ window.renderLatex = function(content) {
         var html = katex.renderToString(content, {
             throwOnError: false,
             output: 'html',
-            displayMode: true // Display as block
+            displayMode: false
         });
         // Insert the rendered HTML into the page
         return html;

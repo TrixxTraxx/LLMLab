@@ -1,3 +1,4 @@
+@using System.Text.RegularExpressions
 @using LLMLab.Client.Caches
 @using LLMLab.Client.Services
 @using Markdig
@@ -62,6 +63,7 @@
                 markdownString = await RenderLatex(markdownString);
                 MarkdownContent = (MarkupString)markdownString;
                 TokenParsing = "";
+                StateHasChanged();
                 await Task.Yield();
             }
             if(NextMarkdownContentTask != null)
@@ -81,21 +83,39 @@
         }
     }
 
+    static string latexPattern = 
+        @"<(?:span|div)\b[^>]*class=""math""[^>]*>([\s\S]*?)<\/(?:span|div)>";
+    static Regex regex = new Regex(latexPattern,
+        RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    
     private async Task<string> RenderLatex(string markdownString)
     {
-        // parse down latex from <span class="math">\(\sum_{k=0}^n k = \frac{n(n+1)}{2}\)</span>
-        var latexPattern = @"<span class=""math"">\\\((.*?)\\\)</span>";
-        var regex = new System.Text.RegularExpressions.Regex(latexPattern);
-        var matches = regex.Matches(markdownString);
-        foreach (System.Text.RegularExpressions.Match match in matches)
+        // note: no /…/g, use Singleline so . matches \n
+       
+
+        foreach (Match match in regex.Matches(markdownString))
         {
-            var latexContent = match.Groups[1].Value;
-            // render using JS Interop to Katex
-            var parsedLatex = await JSRuntime.InvokeAsync<string>("renderLatex", latexContent);
-            // replace the match with the rendered HTML
-            var latexHtml = $"<span class=\"math\" data-latex=\"{parsedLatex}\">{parsedLatex}</span>";
-            markdownString = markdownString.Replace(match.Value, latexHtml);
+            // this literally contains things like "\[ E = m c^2 \]"
+            var raw = match.Groups[1].Value;
+
+            // strip any leading \[ …\] or \( …\)
+            // 1) you can do a quick replace:
+            var inner = raw
+                .Replace(@"\[", "")
+                .Replace(@"\]", "")
+                .Replace(@"\(", "")
+                .Replace(@"\)", "");
+
+            // 2) or more robustly:
+            // var inner = Regex.Replace(raw, @"^\\(?:\[|\()|(?:\]|\))\\$", "");
+
+            // now send JUST the TeX to KaTeX
+            var rendered = await JSRuntime.InvokeAsync<string>(
+                "renderLatex", inner);
+
+            markdownString = markdownString.Replace(match.Value, rendered);
         }
+
         return markdownString;
     }
 
