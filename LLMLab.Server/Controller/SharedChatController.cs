@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LLMLab.Dtos.Messages;
 using LLMLab.Dtos.Threads;
+using LLMLab.Server.Mappers;
+using System.Security.Claims;
 
 namespace LLMLab.Server.Controller
 {
@@ -26,27 +28,15 @@ namespace LLMLab.Server.Controller
         [Authorize]
         public async Task<IActionResult> CreateSnapshot(int threadId)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var thread = await _db.MessageThreads.FirstOrDefaultAsync(t => t.Id == threadId);
             if (thread == null)
                 return NotFound();
+            if (thread.UserId != userId)
+                return Forbid();
 
             var messages = await _db.Messages.Where(m => m.ThreadId == threadId).OrderBy(m => m.CreatedAt).ToListAsync();
-            var messageDtos = messages.Select(m => new MessageDto
-            {
-                Id = m.Id,
-                AttachmentIds = m.AttachmentIds,
-                Text = m.Text,
-                ModelResponse = m.ModelResponse,
-                PreviousMessageId = m.PreviousMessageId,
-                Complete = m.Complete,
-                ModelId = m.ModelId,
-                ThreadId = m.ThreadId,
-                CreatedAt = m.CreatedAt,
-                ThinkingResponse = m.ThinkingResponse,
-                ReasoningEffortLevel = m.ReasoningEffortLevel,
-                Error = m.Error,
-                ErrorMessage = m.ErrorMessage
-            }).ToList();
+            var messageDtos = messages.Select(MessageMapper.Map).ToList();
 
             var snapshot = new SharedChatSnapshotDto
             {
@@ -58,7 +48,7 @@ namespace LLMLab.Server.Controller
             var shared = new SharedChat
             {
                 Uuid = Guid.NewGuid(),
-                UserId = User.Identity?.Name,
+                UserId = userId,
                 SerializedData = serialized
             };
             _db.SharedChats.Add(shared);
