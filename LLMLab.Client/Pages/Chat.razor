@@ -60,7 +60,7 @@
     public ChatInput ChatInput { get; set; }
 
     private MessageTreeDto? messageTree;
-    private bool isLoading = false;
+    private bool isLoading = true;
     private bool isSending = false;
     
     //the down most message of the current Branch
@@ -149,6 +149,7 @@
             messageTree = null;
             currentBranch = new List<MessageCache>();
             currentBranchPath = 0;
+            isLoading = false;
             StateHasChanged();
         }
         _ = Task.Run((Func<Task>) (async() =>
@@ -188,7 +189,6 @@
                 Message = message
             };
             currentBranch.Insert(0, messageCache);
-            StateHasChanged();
 
             var result = await MessageSyncService.SendMessage(messageCache);
             messageCache.Message = result;
