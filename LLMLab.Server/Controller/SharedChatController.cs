@@ -10,63 +10,31 @@ using LLMLab.Dtos.Messages;
 using LLMLab.Dtos.Threads;
 using LLMLab.Server.Mappers;
 using System.Security.Claims;
+using LLMLab.Server.Service;
 
-namespace LLMLab.Server.Controller
+namespace LLMLab.Server.Controller;
+
+
+[ApiController]
+[Route("api/[controller]")]
+public class SharedChatController(ChatSharingService service) : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class SharedChatController : ControllerBase
+
+    // POST api/SharedChat/{threadId}
+    [HttpPost("{threadId}")]
+    [Authorize]
+    public async Task<IActionResult> CreateSnapshot(int threadId)
     {
-        private readonly ApplicationDbContext _db;
-        public SharedChatController(ApplicationDbContext db)
-        {
-            _db = db;
-        }
-
-        // POST api/SharedChat/{threadId}
-        [HttpPost("{threadId}")]
-        [Authorize]
-        public async Task<IActionResult> CreateSnapshot(int threadId)
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var thread = await _db.MessageThreads.Include(t => t.User).FirstOrDefaultAsync(t => t.Id == threadId);
-            if (thread == null)
-                return NotFound();
-            if (thread.UserId != userId)
-                return Forbid();
-
-            var messages = await _db.Messages.Where(m => m.ThreadId == threadId).OrderBy(m => m.CreatedAt).ToListAsync();
-            var messageDtos = messages.Select(MessageMapper.Map).ToList();
-
-            var snapshot = new SharedChatSnapshotDto
-            {
-                Thread = new SharedThreadDto { Id = thread.Id, Title = thread.Title },
-                Messages = messageDtos,
-                Sharer = UserMapper.Map(thread.User)
-            };
-            var serialized = JsonSerializer.Serialize(snapshot);
-
-            var shared = new SharedChat
-            {
-                Uuid = Guid.NewGuid(),
-                UserId = userId,
-                SerializedData = serialized
-            };
-            _db.SharedChats.Add(shared);
-            await _db.SaveChangesAsync();
-            var url = $"/share/{shared.Uuid}";
-            return Ok(new { url });
-        }
-
-        // GET api/SharedChat/{uuid}
-        [HttpGet("{uuid}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetSnapshot(Guid uuid)
-        {
-            var shared = await _db.SharedChats.FirstOrDefaultAsync(s => s.Uuid == uuid);
-            if (shared == null)
-                return NotFound();
-            return Content(shared.SerializedData, "application/json");
-        }
+        var url = await service.CreateSnapshot(threadId);
+        return Ok(url);
     }
-} 
+
+    // GET api/SharedChat/{uuid}
+    [HttpGet("{uuid}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetSnapshot(Guid uuid)
+    {
+        var sharedChatData = await service.GetSharedChatData(uuid);
+        return Ok(sharedChatData);
+    }
+}

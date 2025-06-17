@@ -264,8 +264,7 @@
             var response = await HttpClient.PostAsync($"api/SharedChat/{Cache.Thread.Id}", null);
             if (response.IsSuccessStatusCode)
             {
-                var json = await response.Content.ReadAsStringAsync();
-                var url = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("url").GetString();
+                var url = await response.Content.ReadAsStringAsync();
                 var fullUrl = NavigationManager.BaseUri.TrimEnd('/') + url;
                 await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", fullUrl);
                 Snackbar.Add("Shareable link copied!", Severity.Success);
@@ -278,6 +277,8 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Console.WriteLine("Error sharing thread: ");
+            Console.WriteLine(ex);
         }
     }
 } 
