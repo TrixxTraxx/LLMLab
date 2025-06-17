@@ -4,7 +4,7 @@
 
 This project is a web-based application for interacting with large language models (LLMs). It allows users to create and manage message threads, send messages, and receive responses from different AI models.
 
-This Project was written for the T3 Chat Cloneathon https://t3.gg/chat-cloneathon
+This project was written for the T3 Chat Cloneathon https://t3.gg/chat-cloneathon
 
 ## Features
 
@@ -15,9 +15,9 @@ This Project was written for the T3 Chat Cloneathon https://t3.gg/chat-cloneatho
 -   **Message Streaming**: Send messages to AI models and receive responses in real-time.
 -   **Resumable Streaming**: Continue receiving responses from AI models even after a connection is lost.
 -   **Model Selection**: Choose from various AI models to interact with.
--   **Theme Support**: Light and dark themes for the user interface including a custom theme editor.
+-   **Theme Support**: Light and dark themes for the user interface, including a custom theme editor.
 -   **Bring Your Own Keys**: Use your own API keys for different AI models.
--   **Encryption**: All your Api Keys and messages are encrypted using AES-128-CBC encryption, ensuring that your data is secure.
+-   **Encryption**: All your messages and API keys are encrypted using AES-128-CBC encryption, ensuring that your data is secure.
 
 ## Tech Stack
 
@@ -27,9 +27,9 @@ This Project was written for the T3 Chat Cloneathon https://t3.gg/chat-cloneatho
 
 ## Running the Project
 
-Prerequisites:
+**Prerequisites:**
 *   .NET SDK (version 9.0 or later)
-*   WASM Tools (for client-side WebAssembly support https://learn.microsoft.com/en-us/aspnet/core/blazor/webassembly-build-tools-and-aot?view=aspnetcore-9.0)
+*   WASM Tools (for client-side WebAssembly support: https://learn.microsoft.com/en-us/aspnet/core/blazor/webassembly-build-tools-and-aot?view=aspnetcore-9.0)
 *   Docker (for running the MSSQL database)
 
 
@@ -37,11 +37,11 @@ Prerequisites:
 2.  Navigate to the `LLMLab.AppHost` directory.
 3.  Run the command `dotnet run`.
 
-This will start the application, including the Database, server and client.
+This will start the application, including the database, server, and client.
 
 4.  Open your web browser and navigate to `http://localhost:5000` to access the application.
 
-## Publish the Project
+## Publishing the Project
 
 To deploy the project, you need to publish the `LLMLab.Server` and `LLMLab.ClientWebServer` projects.
 
@@ -53,18 +53,18 @@ To deploy the project, you need to publish the `LLMLab.Server` and `LLMLab.Clien
     ```bash
     dotnet publish -c Release
     ```
-you can add the -o option to specify the output directory for the published files, for example:
+You can add the -o option to specify the output directory for the published files:
     ```bash
     dotnet publish LLMLab.Client -c Release -o ./publish
     ```
-3.  (Optional) if you dont have a Server to host the client files you can use the `LLMLab.ClientWebServer` project to serve the client files. Publish it as well:
+3.  (Optional) If you don't have a Server to host the client files, you can use the `LLMLab.ClientWebServer` project to serve the client files. Publish it as well:
     ```bash
     dotnet publish -c Release
     ```
-    Then Merge the Directories of the Client and ClientWebserver
+    Then merge the directories of the Client and ClientWebServer
 
 
-## Configure the Project
+## Configuring the Project
 1. You have to configure the `appsettings.Production.json` file in the `LLMLab.Server` project to set up your database connection string and other settings. Here is an example configuration:
 ```json
 {
@@ -102,7 +102,7 @@ you can add the -o option to specify the output directory for the published file
 }
 ```
 
-Generate The EncryptionKey here https://generate-random.org/encryption-key-generator?count=1&bytes=8&cipher=aes-128-cbc&string=&password=
+Generate the EncryptionKey here https://generate-random.org/encryption-key-generator?count=1&bytes=8&cipher=aes-128-cbc&string=&password=
 
 2. You also need to configure the `appsettings.json` file in the `LLMLab.Client` project to set up the client URL and other settings. Here is an example configuration:
 ```json
@@ -110,9 +110,9 @@ Generate The EncryptionKey here https://generate-random.org/encryption-key-gener
   "ServerUrl": "https://login.llmlab.chat"
 }
 ```
-unfortunately you have to do this for every Deployment as of right now on the Client Project, The Server Project only has to be configured once.
+On the Client project, you have to do this for every deployment. The Server project only has to be configured once.
 
-## Host the Published Files
+## Hosting the Published Files
 
 You can then deploy the published artifacts to your hosting environment
 
@@ -129,11 +129,11 @@ You can then deploy the published artifacts to your hosting environment
 
 ![img_1.png](img_1.png)
 
-There are also some Tables related to Asp.Net Core Identity and Hangfire but they are managed by libraries!
+There are also some Tables related to ASP.NET Core Identity and Hangfire, but they are managed by libraries.
 
 ## Sync Models
 
-The application uses SignalR for real-time communication between the server and the client. The following models are used for synchronization:
+The application uses SignalR for real-time communication between the server and client. The following models are used for synchronization:
 
 ### Message Threads
 
@@ -145,4 +145,4 @@ The application uses SignalR for real-time communication between the server and 
 
 ### Settings
 
-Settings to not get syncronised or stored on the Server, they are using a Key-Value store in the browser (localStorage) to persist the settings across sessions.
+Settings are not synchronized or stored on the server. They use a key-value store in the browser (localStorage) to persist the settings across sessions.
