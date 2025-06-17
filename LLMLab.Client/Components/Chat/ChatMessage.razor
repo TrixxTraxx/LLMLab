@@ -35,6 +35,29 @@
                     <span class="message-author">You</span>
                     <span class="message-time">@GetLocalTime(Message.Message.CreatedAt)</span>
                 </div>
+                <!-- Navigation buttons -->
+                <div class="message-navigation">
+                    @if (previousMessageId.HasValue)
+                    {
+                        <button class="nav-button" @onclick="() => OnMessageNavigate.InvokeAsync(previousMessageId.Value)" title="Previous message">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                            </svg>
+                        </button>
+                    }
+                    @if (nextMessageId.HasValue)
+                    {
+                        <button class="nav-button" @onclick="() => OnMessageNavigate.InvokeAsync(nextMessageId.Value)" title="Next message">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                            </svg>
+                        </button>
+                    }
+                    @if (messageCount > 1)
+                    {
+                        <span class="message-counter">@(currentMessageIndex + 1)/@messageCount</span>
+                    }
+                </div>
             </div>
             <div class="message-content">
                 <div class="message-text">@Message.Message.Text</div>
@@ -47,6 +70,22 @@
                         }
                     </div>
                 }
+                <div class="message-actions">
+                    <button class="action-button" @onclick="() => CopyToClipboard(Message.Message.Text)"
+                            title="Copy message">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                        </svg>
+                    </button>
+                    <button class="action-button" @onclick="() => OnRegenerateMessage.InvokeAsync(Message)"
+                            title="Retry message">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     }
@@ -122,7 +161,15 @@
     [Parameter] public EventCallback<int> OnBranchSelected { get; set; }
     [Parameter] public EventCallback<MessageCache> OnRegenerateMessage { get; set; }
     [Parameter] public EventCallback OnContentChanged { get; set; }
+    [Parameter] public EventCallback<int> OnMessageNavigate { get; set; }
     [CascadingParameter(Name = "User")] public UserDto? User { get; set; }
+
+    // Navigation properties for last and next buttons
+    public int? nextMessageId = null;
+    public int? previousMessageId = null;
+    public int messageCount = 0;
+    public int currentMessageIndex = 0;
+
 
     private bool isHubConnected = false;
     private List<AiModelDto> aiModels = new List<AiModelDto>();
@@ -131,6 +178,13 @@
     {
         try
         {
+            // init navigation properties from tree
+            var navInfo = MessageTree!.GetPaginationInfo(Message.Message.Id);
+            previousMessageId = navInfo.previosId;
+            nextMessageId = navInfo.nextId;
+            messageCount = navInfo.count;
+            currentMessageIndex = navInfo.index;
+            
             Message.OnUpdated += OnMessageUpdated;
             aiModels = await AiModelService.GetAiModels();
             

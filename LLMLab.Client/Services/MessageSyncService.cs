@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using LLMLab.Client.Caches;
 using LLMLab.Client.Models;
 using LLMLab.Dtos.Messages;
@@ -107,7 +108,7 @@ public class MessageSyncService
             Messages = caches,
             StartMessageId = caches.MaxBy(x => x.Value.Message.CreatedAt).Value.Message.Id,
             PreviousMessages = new Dictionary<int, MessageCache>(),
-            NextMessages = new Dictionary<int, MessageCache>()
+            NextMessages = new Dictionary<int, List<MessageCache>>()
         };
         
         // Populate previous and next messages
@@ -117,10 +118,19 @@ public class MessageSyncService
             {
                 messageTree.PreviousMessages[message.Message.Id] = previousMessage;
             }
-            if (message.Message.Id != 0 && caches.TryGetValue(message.Message.Id, out var nextMessage))
+        }
+        
+        foreach (var messagePair in messageTree.PreviousMessages)
+        {
+            var messageId = messagePair.Key;
+            var previousMessage = messagePair.Value;
+            
+            if (!messageTree.NextMessages.ContainsKey(previousMessage.Message.Id))
             {
-                messageTree.NextMessages[message.Message.Id] = nextMessage;
+                messageTree.NextMessages[previousMessage.Message.Id] = new List<MessageCache>();
             }
+            
+            messageTree.NextMessages[previousMessage.Message.Id].Add(messageTree.Messages[messageId]);
         }
         
         return messageTree;

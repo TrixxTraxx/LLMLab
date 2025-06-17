@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using LLMLab.Dtos.Threads;
 using MessagePack;
 
@@ -13,5 +14,6 @@ public class ThreadCache
     public DateTime LastUpdated { get; set; }
     
     [IgnoreMember]
+    [JsonIgnore]
     public Action OnUpdated { get; set; } = () => { };
 }

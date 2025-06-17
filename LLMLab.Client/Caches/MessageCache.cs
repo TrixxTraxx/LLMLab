@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using LLMLab.Dtos.Messages;
 using MessagePack;
 
@@ -16,12 +17,15 @@ public class MessageCache
     public int RenderKey { get; set; } = 0;
     
     [IgnoreMember]
+    [JsonIgnore]
     public Action OnUpdated { get; set; } = () => { };
     
     [IgnoreMember]
+    [JsonIgnore]
     public Action<string> OnReasoningGenerate { get; set; } = (output) => { };
     
     [IgnoreMember]
+    [JsonIgnore]
     public Action<string> OnGenerate { get; set; } = (output) => { };
     
     //unique render id
