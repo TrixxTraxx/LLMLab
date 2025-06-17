@@ -59,6 +59,7 @@
             }
             title = snapshot.Thread.Title;
             messages = snapshot.Messages.Select(m => new MessageCache { Message = m, LastUpdated = m.CreatedAt }).ToList();
+            messages.Reverse();
             StateHasChanged();
         }
         catch (Exception ex)
