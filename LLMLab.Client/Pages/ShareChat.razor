@@ -11,28 +11,26 @@
 <PageTitle>Shared Chat</PageTitle>
 
 <div class="shared-chat-container">
-    <div class="chat-messages-container">
-        @if (isLoading)
-        {
-            <div class="chat-loading-container">
-                <MudProgressCircular Indeterminate="true" Size="Size.Medium" />
-                <MudText Typo="Typo.h6" Class="mt-4">Loading shared chat...</MudText>
-            </div>
-        }
-        else if (loadError != null)
-        {
-            <MudText Color="Color.Error">@loadError</MudText>
-        }
-        else if (messages != null)
-        {
-            <div class="chat-title-container">
-                <MudText Typo="Typo.h4" Class="chat-title">@title</MudText>
-            </div>
-            <CascadingValue Value="@sharer" Name="User">
-                <ChatTree Messages="messages" ReadOnly="true" />
-            </CascadingValue>
-        }
-    </div>
+    @if (isLoading)
+    {
+        <div class="chat-loading-container">
+            <MudProgressCircular Indeterminate="true" Size="Size.Medium" />
+            <MudText Typo="Typo.h6" Class="mt-4">Loading shared chat...</MudText>
+        </div>
+    }
+    else if (loadError != null)
+    {
+        <MudText Color="Color.Error">@loadError</MudText>
+    }
+    else if (messages != null)
+    {
+        <div class="chat-title-container">
+            <MudText Typo="Typo.h4" Class="chat-title">@title</MudText>
+        </div>
+        <CascadingValue Value="@sharer" Name="User">
+            <ChatTree Messages="messages" ReadOnly="true" />
+        </CascadingValue>
+    }
 </div>
 
 @code {

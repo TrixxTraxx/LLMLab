@@ -4,7 +4,6 @@
 @inherits LayoutComponentBase
 @inject ClientAuthenticationService ClientAuthenticationService
 @inject IJSRuntime JSRuntime
-@inject NavigationManager NavigationManager
 
 <MyMudThemeProvider />
 <MudPopoverProvider />
@@ -34,12 +33,7 @@
                 <LoginDisplay/>
             </div>
         </MudDrawer>
-        
         <MudMainContent Class="pt-0 px-0">
-            @if (CurrentThreadId.HasValue)
-            {
-                <ChatTopBar CurrentThreadId="@CurrentThreadId" />
-            }
             <MudContainer MaxWidth="MaxWidth.Medium">
                 @Body
             </MudContainer>
@@ -50,7 +44,6 @@
 @code {
     private bool _drawerOpen = true;
     private bool _isMobile = false;
-    private int? CurrentThreadId { get; set; }
 
     private UserDto? User;
 
@@ -59,40 +52,6 @@
         User = await ClientAuthenticationService.GetCurrentUser();
         _isMobile = await IsMobileDevice();
         _drawerOpen = !_isMobile; // Open drawer on desktop, closed on mobile
-        UpdateCurrentThreadId();
-    }
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-        {
-            NavigationManager.LocationChanged += OnLocationChanged;
-        }
-    }
-
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        UpdateCurrentThreadId();
-        StateHasChanged();
-    }
-
-    private void UpdateCurrentThreadId()
-    {
-        var uri = NavigationManager.Uri;
-        if (uri.Contains("/chat/"))
-        {
-            var segments = uri.Split('/');
-            var chatIndex = Array.IndexOf(segments, "chat");
-            if (chatIndex >= 0 && chatIndex + 1 < segments.Length)
-            {
-                if (int.TryParse(segments[chatIndex + 1], out var threadId))
-                {
-                    CurrentThreadId = threadId;
-                    return;
-                }
-            }
-        }
-        CurrentThreadId = null;
     }
 
     private async Task<bool> IsMobileDevice()
@@ -101,13 +60,4 @@
         return width < 768;
     }
 
-    private void StartNewChat()
-    {
-        // TODO: Implement new chat functionality
-    }
-
-    public void Dispose()
-    {
-        NavigationManager.LocationChanged -= OnLocationChanged;
-    }
 }
