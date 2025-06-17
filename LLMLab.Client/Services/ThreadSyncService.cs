@@ -14,6 +14,7 @@ public class ThreadSyncService
     private readonly HttpClient _http;
     private readonly ISnackbar _snackbar;
     private readonly StorageService _storageService;
+    private bool _disableThreadSyncErrors = false;
     
     public Action<List<ThreadCache>>? ThreadsUpdated;
 
@@ -100,8 +101,10 @@ public class ThreadSyncService
 
         if (!response.IsSuccessStatusCode)
         {
-            //something went very wrong
-            _snackbar.Add("Failed to sync threads", Severity.Error);
+            if(!_disableThreadSyncErrors) {
+                //something went very wrong
+                _snackbar.Add("Failed to sync threads", Severity.Error);
+            }
             return;
         }
         
@@ -227,5 +230,10 @@ public class ThreadSyncService
             _snackbar.Add($"Error branching thread: {ex.Message}", Severity.Error);
             Console.WriteLine($"Error branching thread: {ex}");
         }
+    }
+
+    public void DisableErrorHandling()
+    {
+        _disableThreadSyncErrors = true;
     }
 }

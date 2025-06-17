@@ -1,36 +1,54 @@
 @page "/share/{Uuid:guid}"
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
+@layout ChatShareLayout
 @using System.Text.Json
 @using LLMLab.Client.Caches
 @using LLMLab.Client.Components.Chat
+@using LLMLab.Client.Layout
 @using LLMLab.Dtos.Messages
 @using LLMLab.Dtos.Threads
 @using LLMLab.Dtos.User
 
-<PageTitle>Shared Chat</PageTitle>
+<PageTitle>@(title ?? "Shared Chat")</PageTitle>
 
-<div class="shared-chat-container">
-    @if (isLoading)
-    {
-        <div class="chat-loading-container">
-            <MudProgressCircular Indeterminate="true" Size="Size.Medium" />
-            <MudText Typo="Typo.h6" Class="mt-4">Loading shared chat...</MudText>
-        </div>
-    }
-    else if (loadError != null)
-    {
-        <MudText Color="Color.Error">@loadError</MudText>
-    }
-    else if (messages != null)
-    {
-        <div class="chat-title-container">
-            <MudText Typo="Typo.h4" Class="chat-title">@title</MudText>
-        </div>
-        <CascadingValue Value="@sharer" Name="User">
-            <ChatTree Messages="messages" ReadOnly="true" />
-        </CascadingValue>
-    }
+<div class="chat-container">
+    <div class="chat-messages-container">
+        @if (isLoading)
+        {
+            <div class="chat-loading-container">
+                <MudProgressCircular Indeterminate="true" Size="Size.Medium" />
+                <MudText Typo="Typo.h6" Class="mt-4">Loading shared chat...</MudText>
+            </div>
+        }
+        else if (loadError != null)
+        {
+            <div class="chat-loading-container">
+                <MudText Color="Color.Error">@loadError</MudText>
+            </div>
+        }
+        else if (messages != null)
+        {
+            <div class="shared-chat-header">
+                <div class="shared-chat-badge">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="share-icon">
+                        <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.03-.47-.09-.7l7.02-4.11c.53.5 1.23.81 2 .81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.91 9.81C8.38 9.31 7.68 9 6.91 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.77 0 1.47-.31 2-.81l7.12 4.18c-.05.21-.08.43-.08.66 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"/>
+                    </svg>
+                    <span class="badge-text">Shared Chat</span>
+                </div>
+                <h1 class="shared-chat-title">@title</h1>
+                @if (sharer != null)
+                {
+                    <div class="shared-by">
+                        <span class="shared-by-text">Shared by @sharer.DisplayName</span>
+                    </div>
+                }
+            </div>
+            <CascadingValue Value="@sharer" Name="User">
+                <ChatTree Messages="messages" ReadOnly="true" />
+            </CascadingValue>
+        }
+    </div>
 </div>
 
 @code {
