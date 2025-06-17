@@ -187,11 +187,7 @@
         try
         {
             // init navigation properties from tree
-            var navInfo = MessageTree!.GetPaginationInfo(Message.Message.Id);
-            previousMessageId = navInfo.previosId;
-            nextMessageId = navInfo.nextId;
-            messageCount = navInfo.count;
-            currentMessageIndex = navInfo.index;
+            InitPaginiation();
             
             Message.OnUpdated += OnMessageUpdated;
             aiModels = await AiModelService.GetAiModels();
@@ -206,6 +202,23 @@
         {
             Console.WriteLine($"Failed to load Chat Message:");
             Console.WriteLine(ex);
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        InitPaginiation();
+    }
+
+    private void InitPaginiation()
+    {
+        if (MessageTree != null)
+        {
+            var navInfo = MessageTree.GetPaginationInfo(Message.Message.Id);
+            previousMessageId = navInfo.previosId;
+            nextMessageId = navInfo.nextId;
+            messageCount = navInfo.count;
+            currentMessageIndex = navInfo.index;
         }
     }
 
