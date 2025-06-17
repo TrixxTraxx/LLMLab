@@ -6,6 +6,18 @@
     overflow: hidden;
 }
 
+.chat-container.chat-with-topbar {
+    height: calc(100vh - 64px); /* Subtract top bar height only when top bar is present */
+    max-height: calc(100vh - 64px);
+}
+
+.shared-chat-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
 .chat-messages-container {
     flex: 1;
     overflow-y: auto;

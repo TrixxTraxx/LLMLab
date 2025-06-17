@@ -13,7 +13,7 @@
 
 <PageTitle>LLM Lab - AI Chat Assistant</PageTitle>
 
-<div class="chat-container">
+<div class="chat-container @(ThreadId.HasValue ? "chat-with-topbar" : "")">
     <div class="chat-messages-container">
         @if (isLoading)
         {
