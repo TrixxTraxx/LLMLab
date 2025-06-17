@@ -915,23 +915,3 @@
     display: block;        /* Ensures it takes up a full line */
     max-width: 160px;      /* Set max width as you prefer (adjust to your design) */
 }
-
-.token-counter {
-    position: static;
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    background: color-mix(in srgb, var(--mud-palette-surface) 85%, transparent);
-    border-radius: 8px;
-    padding: 4px 12px;
-    font-size: 13px;
-    color: var(--mud-palette-text-secondary, #888);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    font-family: inherit;
-    z-index: 2;
-    pointer-events: none;
-    height: 32px;
-    min-width: 80px;
-    justify-content: flex-end;
-    white-space: nowrap;
-}

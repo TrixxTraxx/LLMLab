@@ -79,7 +79,7 @@
     {
         if (_wasScrolledToBottom == atBottom) return;
         _wasScrolledToBottom = atBottom;
-        StateHasChanged();
+        InvokeAsync(StateHasChanged);
     }
     
     protected override async Task OnAfterRenderAsync(bool firstRender)

@@ -182,9 +182,6 @@
                     }
                 </div>
             </div>
-            <div class="token-counter">
-                @FormatTokenCount(GetApproximateTokenCount(message.Text))/@FormatTokenCount(GetSelectedModelMaxTokens()) tokens
-            </div>
         </div>
         
         @if (IsLoading)
@@ -589,29 +586,5 @@
     {
         JSRuntime.InvokeVoidAsync("removeDocumentClickHandler");
         JSRuntime.InvokeVoidAsync("unregisterBlazorComponent", "reasoningMenu");
-    }
-
-    // Approximate token count: 1 token ≈ 4 characters
-    private int GetApproximateTokenCount(string text)
-    {
-        if (string.IsNullOrWhiteSpace(text)) return 0;
-        return Math.Max(1, text.Length / 4);
-    }
-
-    private int GetSelectedModelMaxTokens()
-    {
-        var selectedModel = aiModels.FirstOrDefault(m => m.Id == selectedModelId);
-        return selectedModel?.MaxInputTokens ?? 0;
-    }
-
-    private string FormatTokenCount(int tokens)
-    {
-        if (tokens < 1000)
-            return tokens.ToString();
-            
-        double kTokens = tokens / 1000.0;
-        if (kTokens < 10)
-            return $"{kTokens:F2}K";
-        return $"{kTokens:F1}K";
     }
 }
