@@ -1,0 +1,86 @@
+.chat-top-bar {
+    background-color: var(--mud-palette-surface);
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+    flex-shrink: 0;
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    position: relative;
+    z-index: 100;
+    background: linear-gradient(to bottom, var(--mud-palette-surface) 0%, var(--mud-palette-surface) 85%, rgba(0, 0, 0, 0.02) 100%);
+}
+
+.chat-top-bar-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 100%;
+    height: 100%;
+}
+
+.chat-top-bar-left {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.chat-top-bar-right {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.thread-title {
+    color: var(--mud-palette-text-primary);
+    font-weight: 600;
+    margin: 0;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+    font-size: 1.25rem;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+}
+
+.share-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--mud-palette-primary);
+    color: var(--mud-palette-primary-text);
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.share-button:hover {
+    background-color: var(--mud-palette-primary-darken);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.share-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.share-button svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.share-button-text {
+    white-space: nowrap;
+} 

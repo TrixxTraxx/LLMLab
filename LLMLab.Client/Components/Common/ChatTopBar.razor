@@ -1,0 +1,77 @@
+@using LLMLab.Client.Caches
+@using LLMLab.Client.Services
+@inject ThreadSyncService ThreadSyncService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject ISnackbar Snackbar
+@inject HttpClient HttpClient
+
+<div class="chat-top-bar">
+    <div class="chat-top-bar-content">
+        <div class="chat-top-bar-left">
+            @if (CurrentThreadId.HasValue && currentThread != null)
+            {
+                <MudText Typo="Typo.h6" Class="thread-title">@currentThread.Thread.Title</MudText>
+            }
+        </div>
+        <div class="chat-top-bar-right">
+            @if (CurrentThreadId.HasValue && currentThread != null)
+            {
+                <button
+                    type="button"
+                    class="share-button"
+                    title="Share thread"
+                    @onclick="ShareThread">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.03-.47-.09-.7l7.02-4.11c.53.5 1.23.81 2 .81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.91 9.81C8.38 9.31 7.68 9 6.91 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.77 0 1.47-.31 2-.81l7.12 4.18c-.05.21-.08.43-.08.66 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"/>
+                    </svg>
+                    <span class="share-button-text">Share</span>
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int? CurrentThreadId { get; set; }
+    
+    private ThreadCache? currentThread;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (CurrentThreadId.HasValue)
+        {
+            currentThread = await ThreadSyncService.GetThreadCache(CurrentThreadId.Value);
+        }
+        else
+        {
+            currentThread = null;
+        }
+    }
+
+    private async Task ShareThread()
+    {
+        if (currentThread == null) return;
+        
+        try
+        {
+            var response = await HttpClient.PostAsync($"api/SharedChat/{currentThread.Thread.Id}", null);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var url = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("url").GetString();
+                var fullUrl = NavigationManager.BaseUri.TrimEnd('/') + url;
+                await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", fullUrl);
+                Snackbar.Add("Shareable link copied!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Failed to create shareable link.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+} 
