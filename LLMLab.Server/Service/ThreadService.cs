@@ -98,7 +98,7 @@ public class ThreadService(
         var newThread = new MessageThread
         {
             UserId = userId,
-            Title = "New Chat Branch",
+            Title = thread.Title,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             BranchFromThreadId = thread.Id, // Link to the original thread
