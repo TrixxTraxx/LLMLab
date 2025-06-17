@@ -28,4 +28,12 @@ public class ThreadsController(
         //dont return anything, client should trigger the sync
         return Ok();
     }
+    
+    [HttpGet("branch/{threadId}")]
+    public async Task<IActionResult> BranchThread(int id)
+    {
+        var branchedThreadId = await service.CreateChatBranch(id);
+        //only return the Id of the branched thread for client to reroute
+        return Ok(branchedThreadId);
+    }
 }

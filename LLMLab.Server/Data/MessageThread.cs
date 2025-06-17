@@ -9,6 +9,10 @@ public class MessageThread
     public ApplicationUser User { get; set; }
     
     public ICollection<Message> Messages { get; set; } = new List<Message>();
+
+    // The ID of the last message in the thread
+    // we could make this a foreign key but its not strictly necessary since its a deep copy and only for display purposes
+    public int? BranchFromThreadId { get; set; } = null;
     
     public int Version { get; set; } = 1;
     

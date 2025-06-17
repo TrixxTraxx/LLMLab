@@ -29,4 +29,7 @@ public class ThreadDto
     
     [Key(7)]
     public bool Deleted { get; set; }
+    
+    [Key(8)]
+    public int? BranchFromThreadId { get; set; } = null;
 }

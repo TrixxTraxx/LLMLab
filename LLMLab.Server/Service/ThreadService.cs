@@ -74,6 +74,62 @@ public class ThreadService(
         
         return ThreadMapper.Map(thread);
     }
+
+    public async Task<int> CreateChatBranch(int messageId)
+    {
+        var userId = httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null)
+        {
+            throw new UnauthorizedAccessException("User not authenticated");
+        }
+
+        var message = await context.Messages
+            .Include(x => x.Thread)
+            .ThenInclude(x => x.Messages)
+            .Include(x => x.Thread)
+            .ThenInclude(x => x.User)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == messageId && m.Thread.UserId == userId);
+        
+        if (message == null)
+        {
+            throw new KeyNotFoundException($"Message with ID {messageId} not found.");
+        }
+
+        message.Thread.User.ThreadVersion++; // Increment user's thread version
+        // Create a new thread for the chat branch
+        var newThread = new MessageThread
+        {
+            UserId = userId,
+            Title = "New Chat Branch",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            BranchFromThreadId = message.Thread.Id, // Link to the original thread
+            Version = message.Thread.User.ThreadVersion // Initial version
+        };
+        
+        var messages = new List<Message>();
+        // get all the messages in the message chain
+        var currentMessage = message;
+        while (currentMessage != null)
+        {
+            // Create a copy of the message for the new thread
+            messages.Add(currentMessage);
+            currentMessage = currentMessage
+                .Thread.Messages
+                .FirstOrDefault(m => m.Id == currentMessage.PreviousMessageId);
+        }
+        newThread.Messages = messages;
+        
+        context.MessageThreads.Add(newThread);
+        
+        // Add the message to the new thread
+        await context.SaveChangesAsync();
+
+        SendThreadUpdate(userId);
+        
+        return newThread.Id; // Return the ID of the newly created thread
+    }
     
     public void SendThreadUpdate(string userId)
     {
