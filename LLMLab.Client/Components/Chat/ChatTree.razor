@@ -3,7 +3,7 @@
 <div class="chat-tree-container">
     @if (Messages.Any())
     {
-        @foreach (var message in Messages)
+        @foreach (var message in Messages.Where(x => x.Message.Id != 0))
         {
             <ChatMessage
                 @key="message.RenderId"
