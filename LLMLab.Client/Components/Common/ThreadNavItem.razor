@@ -3,6 +3,8 @@
 @inject NavigationManager NavigationManager
 @inject ThreadSyncService ThreadSyncService
 @inject IJSRuntime JSRuntime
+@inject ISnackbar Snackbar
+@inject HttpClient HttpClient
 
 <a href="@($"/chat/{Cache.Thread.Id}")"
    class="thread-nav-link @(IsActive ? "active" : "")"
@@ -26,6 +28,17 @@
         </div>
         <span class="thread-title">@Cache.Thread.Title</span>
         <div class="thread-actions">
+            <button
+                type="button"
+                class="thread-action-btn thread-share-btn"
+                title="Share thread"
+                @onclick:stopPropagation="true"
+                @onclick:preventDefault="true"
+                @onclick="ShareThread">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.03-.47-.09-.7l7.02-4.11c.53.5 1.23.81 2 .81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.91 9.81C8.38 9.31 7.68 9 6.91 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.77 0 1.47-.31 2-.81l7.12 4.18c-.05.21-.08.43-.08.66 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"/>
+                </svg>
+            </button>
             <button
                 type="button"
                 class="thread-action-btn thread-edit-btn"
@@ -236,5 +249,36 @@
         
         // Update backend
         await ThreadSyncService.UpdateThread(cache);
+        
+        // If this was the current thread, navigate to default page
+        if (IsActive)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task ShareThread()
+    {
+        try
+        {
+            var response = await HttpClient.PostAsync($"api/SharedChat/{Cache.Thread.Id}", null);
+            if (response.IsSuccessStatusCode)
+            {
+                var url = await response.Content.ReadAsStringAsync();
+                var fullUrl = NavigationManager.BaseUri.TrimEnd('/') + url;
+                await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", fullUrl);
+                Snackbar.Add("Shareable link copied!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Failed to create shareable link.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Console.WriteLine("Error sharing thread: ");
+            Console.WriteLine(ex);
+        }
     }
 } 

@@ -4,6 +4,7 @@
 @inherits LayoutComponentBase
 @inject ClientAuthenticationService ClientAuthenticationService
 @inject IJSRuntime JSRuntime
+@inject ThreadSyncService ThreadSyncService
 
 <MyMudThemeProvider />
 <MudPopoverProvider />
@@ -49,7 +50,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        User = await ClientAuthenticationService.GetCurrentUser();
+        ThreadSyncService.DisableErrorHandling();
+        User = await ClientAuthenticationService.GetCurrentUser(false);
         _isMobile = await IsMobileDevice();
         _drawerOpen = !_isMobile; // Open drawer on desktop, closed on mobile
     }

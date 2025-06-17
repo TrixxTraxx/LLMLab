@@ -55,6 +55,7 @@ builder.Services.AddScoped<AttachmentService>();
 builder.Services.AddScoped<AiModelService>();
 builder.Services.AddScoped<AiKeyService>();
 builder.Services.AddScoped<AiGenerationService>();
+builder.Services.AddScoped<ChatSharingService>();
 
 builder.Services.AddScoped<ChatModelProvider>();
 builder.Services.AddScoped<OpenAiChat>();

@@ -21,6 +21,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<MessageAttachment> MessageAttachments { get; set; }
     public DbSet<AiModel> AiModels { get; set; }
     public DbSet<AiModelKeys> AiModelKeys { get; set; }
+    public DbSet<SharedChat> SharedChats { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
