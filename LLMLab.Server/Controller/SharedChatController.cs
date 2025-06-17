@@ -29,7 +29,7 @@ namespace LLMLab.Server.Controller
         public async Task<IActionResult> CreateSnapshot(int threadId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var thread = await _db.MessageThreads.FirstOrDefaultAsync(t => t.Id == threadId);
+            var thread = await _db.MessageThreads.Include(t => t.User).FirstOrDefaultAsync(t => t.Id == threadId);
             if (thread == null)
                 return NotFound();
             if (thread.UserId != userId)
@@ -41,7 +41,8 @@ namespace LLMLab.Server.Controller
             var snapshot = new SharedChatSnapshotDto
             {
                 Thread = new SharedThreadDto { Id = thread.Id, Title = thread.Title },
-                Messages = messageDtos
+                Messages = messageDtos,
+                Sharer = UserMapper.Map(thread.User)
             };
             var serialized = JsonSerializer.Serialize(snapshot);
 

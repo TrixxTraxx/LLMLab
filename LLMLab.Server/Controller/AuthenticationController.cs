@@ -1,5 +1,6 @@
 ﻿using LLMLab.Server.Data;
 using LLMLab.Server.Mappers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,6 +36,31 @@ public class AuthenticationController : ControllerBase
         if (user == null)
         {
             return Unauthorized();
+        }
+        
+        //proxy the profile picture URL and cache it
+        if (string.IsNullOrEmpty(user.ProfilePictureUrl))
+        {
+            return NotFound("Profile picture not found.");
+        }
+        var httpClient = new HttpClient();
+        var response = await httpClient.GetAsync(user.ProfilePictureUrl);
+        if (!response.IsSuccessStatusCode)
+        {
+            return NotFound("Profile picture not found.");
+        }
+        var content = await response.Content.ReadAsByteArrayAsync();
+        return File(content, "image/jpeg"); // Assuming the profile picture is in JPEG format
+    }
+    
+    [HttpGet("profilePicture/{userId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetProfilePictureById(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return NotFound("User not found.");
         }
         
         //proxy the profile picture URL and cache it

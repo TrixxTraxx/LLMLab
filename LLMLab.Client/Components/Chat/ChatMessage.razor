@@ -34,7 +34,7 @@
                     }
                 </div>
                 <div class="message-info">
-                    <span class="message-author">You</span>
+                    <span class="message-author">@(User?.DisplayName ?? "You")</span>
                     <span class="message-time">@GetLocalTime(Message.Message.CreatedAt)</span>
                 </div>
             </div>
@@ -271,6 +271,10 @@
 
     private string? GetProfilePictureUrl(UserDto user)
     {
+        if (!string.IsNullOrEmpty(user.Id))
+        {
+            return $"{AppsettingsService.ServerUrl}/api/Authentication/profilePicture/{user.Id}";
+        }
         return $"{AppsettingsService.ServerUrl}/api/Authentication/profilePicture";
     }
 

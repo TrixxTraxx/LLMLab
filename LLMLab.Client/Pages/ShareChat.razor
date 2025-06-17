@@ -6,6 +6,7 @@
 @using LLMLab.Client.Components.Chat
 @using LLMLab.Dtos.Messages
 @using LLMLab.Dtos.Threads
+@using LLMLab.Dtos.User
 
 <PageTitle>Shared Chat</PageTitle>
 
@@ -27,7 +28,9 @@
             <div class="chat-title-container">
                 <MudText Typo="Typo.h4" Class="chat-title">@title</MudText>
             </div>
-            <ChatTree Messages="messages" ReadOnly="true" />
+            <CascadingValue Value="@sharer" Name="User">
+                <ChatTree Messages="messages" ReadOnly="true" />
+            </CascadingValue>
         }
     </div>
 </div>
@@ -38,6 +41,7 @@
     private List<MessageCache>? messages;
     private bool isLoading = true;
     private string? loadError;
+    private UserDto? sharer;
 
     protected override async Task OnInitializedAsync()
     {
@@ -60,6 +64,7 @@
             title = snapshot.Thread.Title;
             messages = snapshot.Messages.Select(m => new MessageCache { Message = m, LastUpdated = m.CreatedAt }).ToList();
             messages.Reverse();
+            sharer = snapshot.Sharer;
             StateHasChanged();
         }
         catch (Exception ex)
