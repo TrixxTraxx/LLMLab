@@ -29,10 +29,10 @@ public class ThreadsController(
         return Ok();
     }
     
-    [HttpGet("branch/{threadId}")]
-    public async Task<IActionResult> BranchThread(int id)
+    [HttpGet("branch/{messageId}")]
+    public async Task<IActionResult> BranchThread(int messageId)
     {
-        var branchedThreadId = await service.CreateChatBranch(id);
+        var branchedThreadId = await service.CreateChatBranch(messageId);
         //only return the Id of the branched thread for client to reroute
         return Ok(branchedThreadId);
     }

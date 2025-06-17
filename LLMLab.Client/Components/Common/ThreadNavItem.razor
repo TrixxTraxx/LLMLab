@@ -9,9 +9,20 @@
    @onclick="@(() => OnThreadSelected.InvokeAsync(Cache.Thread.Id))">
     <div class="thread-content">
         <div class="thread-icon">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
-            </svg>
+            @if (Cache.Thread.BranchFromThreadId.HasValue)
+            {
+                <!-- Branch icon for branched threads -->
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,4V6H10V4H14M10,7H14A1,1 0 0,1 15,8V10H13V9H11V14H10V20H8V14H7A1,1 0 0,1 6,13V8A1,1 0 0,1 7,7H10M16,10V8A3,3 0 0,0 13,5H11A3,3 0 0,0 8,8V13A3,3 0 0,0 11,16H12V18H16V20H18V18H22V16H18V10H16Z"/>
+                </svg>
+            }
+            else
+            {
+                <!-- Default chat icon -->
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+                </svg>
+            }
         </div>
         <span class="thread-title">@Cache.Thread.Title</span>
         <div class="thread-actions">

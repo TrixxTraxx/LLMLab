@@ -201,4 +201,31 @@ public class ThreadSyncService
             _snackbar.Add("Failed to delete thread.", Severity.Error);
         }
     }
+
+    public async Task BranchThread(int messageId, Action<int> callback)
+    {
+        try
+        {
+            var response = await _http.GetAsync($"api/Threads/branch/{messageId}");
+            if (response.IsSuccessStatusCode)
+            {
+                var newThreadId = await response.Content.ReadFromJsonAsync<int>();
+                // Update threads to refresh the cache with the new branched thread
+                await UpdateThreadCaches(x =>
+                {
+                    callback.Invoke(newThreadId);
+                    ThreadsUpdated?.Invoke(x);
+                });
+            }
+            else
+            {
+                _snackbar.Add($"Failed to branch thread: {response.ReasonPhrase}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"Error branching thread: {ex.Message}", Severity.Error);
+            Console.WriteLine($"Error branching thread: {ex}");
+        }
+    }
 }

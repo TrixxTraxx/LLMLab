@@ -83,20 +83,17 @@ public class ThreadService(
             throw new UnauthorizedAccessException("User not authenticated");
         }
 
-        var message = await context.Messages
-            .Include(x => x.Thread)
-            .ThenInclude(x => x.Messages)
-            .Include(x => x.Thread)
-            .ThenInclude(x => x.User)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(m => m.Id == messageId && m.Thread.UserId == userId);
+        var thread = await context.MessageThreads
+            .Include(x => x.Messages)
+            .Include(x => x.User)
+            .FirstOrDefaultAsync(thread => thread.Messages.Any(m => m.Id == messageId) && thread.UserId == userId);
         
-        if (message == null)
+        if (thread == null)
         {
             throw new KeyNotFoundException($"Message with ID {messageId} not found.");
         }
 
-        message.Thread.User.ThreadVersion++; // Increment user's thread version
+        thread.User.ThreadVersion++; // Increment user's thread version
         // Create a new thread for the chat branch
         var newThread = new MessageThread
         {
@@ -104,19 +101,22 @@ public class ThreadService(
             Title = "New Chat Branch",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            BranchFromThreadId = message.Thread.Id, // Link to the original thread
-            Version = message.Thread.User.ThreadVersion // Initial version
+            BranchFromThreadId = thread.Id, // Link to the original thread
+            Version = thread.User.ThreadVersion // Initial version
         };
         
         var messages = new List<Message>();
         // get all the messages in the message chain
-        var currentMessage = message;
+        var currentMessage = thread.Messages.
+            First(m => m.Id == messageId);
         while (currentMessage != null)
         {
-            // Create a copy of the message for the new thread
+            // Create a copy of the message for the new thread by detaching it from the context
+            context.Entry(currentMessage).State = EntityState.Detached;
+            currentMessage.Id = 0; // Reset ID for the new thread
             messages.Add(currentMessage);
-            currentMessage = currentMessage
-                .Thread.Messages
+            if (currentMessage.PreviousMessageId == 0) break;
+            currentMessage = thread.Messages
                 .FirstOrDefault(m => m.Id == currentMessage.PreviousMessageId);
         }
         newThread.Messages = messages;
