@@ -177,8 +177,8 @@
 /* Navigation buttons */
 .message-navigation {
     display: flex;
+    align-items: center;
     gap: 4px;
-    margin-left: auto;
 }
 
 .nav-button {
@@ -223,6 +223,9 @@
     border: 1px solid color-mix(in srgb, var(--mud-palette-surface) 30%, transparent);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    margin: 0 2px;
+    min-width: 28px;
+    text-align: center;
 }
 
 /* Typing Indicator */
@@ -377,6 +380,26 @@
     opacity: 1;
 }
 
+/* User Message Bottom Bar */
+.user-message-bottom-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+
+/* User Message Actions - positioned at bottom left */
+.user-message-actions {
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.user-message:hover .user-message-actions {
+    opacity: 1;
+}
+
 .action-button {
     width: 28px;
     height: 28px;
@@ -408,6 +431,20 @@
 .action-button svg {
     width: 14px;
     height: 14px;
+}
+
+/* Navigation button disabled state */
+.nav-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.nav-button:disabled:hover {
+    background: color-mix(in srgb, var(--mud-palette-surface) 20%, transparent);
+    border-color: color-mix(in srgb, var(--mud-palette-surface) 40%, transparent);
+    color: var(--mud-palette-text-secondary);
+    transform: none;
 }
 
 /* Responsive Design */

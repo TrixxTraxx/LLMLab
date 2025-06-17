@@ -35,29 +35,6 @@
                     <span class="message-author">You</span>
                     <span class="message-time">@GetLocalTime(Message.Message.CreatedAt)</span>
                 </div>
-                <!-- Navigation buttons -->
-                <div class="message-navigation">
-                    @if (previousMessageId.HasValue)
-                    {
-                        <button class="nav-button" @onclick="() => OnMessageNavigate.InvokeAsync(previousMessageId.Value)" title="Previous message">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-                            </svg>
-                        </button>
-                    }
-                    @if (nextMessageId.HasValue)
-                    {
-                        <button class="nav-button" @onclick="() => OnMessageNavigate.InvokeAsync(nextMessageId.Value)" title="Next message">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-                            </svg>
-                        </button>
-                    }
-                    @if (messageCount > 1)
-                    {
-                        <span class="message-counter">@(currentMessageIndex + 1)/@messageCount</span>
-                    }
-                </div>
             </div>
             <div class="message-content">
                 <div class="message-text">@Message.Message.Text</div>
@@ -70,7 +47,10 @@
                         }
                     </div>
                 }
-                <div class="message-actions">
+            </div>
+            <!-- Bottom bar with actions on left and navigation on right -->
+            <div class="user-message-bottom-bar">
+                <div class="user-message-actions">
                     <button class="action-button" @onclick="() => CopyToClipboard(Message.Message.Text)"
                             title="Copy message">
                         <svg viewBox="0 0 24 24" fill="currentColor">
@@ -86,6 +66,35 @@
                         </svg>
                     </button>
                 </div>
+                @if (messageCount > 1 || previousMessageId.HasValue || nextMessageId.HasValue)
+                {
+                    <div class="message-navigation">
+                        <button class="nav-button" 
+                                @onclick="() => OnBranchSelected.InvokeAsync(previousMessageId.Value)" 
+                                disabled="@(!previousMessageId.HasValue)"
+                                title="Previous message">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                            </svg>
+                        </button>
+                        @if (messageCount > 0)
+                        {
+                            <span class="message-counter">@(currentMessageIndex + 1)/@messageCount</span>
+                        }
+                        else
+                        {
+                            <span class="message-counter">1/1</span>
+                        }
+                        <button class="nav-button" 
+                                @onclick="() => OnBranchSelected.InvokeAsync(nextMessageId.Value)" 
+                                disabled="@(!nextMessageId.HasValue)"
+                                title="Next message">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                            </svg>
+                        </button>
+                    </div>
+                }
             </div>
         </div>
     }
@@ -161,7 +170,6 @@
     [Parameter] public EventCallback<int> OnBranchSelected { get; set; }
     [Parameter] public EventCallback<MessageCache> OnRegenerateMessage { get; set; }
     [Parameter] public EventCallback OnContentChanged { get; set; }
-    [Parameter] public EventCallback<int> OnMessageNavigate { get; set; }
     [CascadingParameter(Name = "User")] public UserDto? User { get; set; }
 
     // Navigation properties for last and next buttons

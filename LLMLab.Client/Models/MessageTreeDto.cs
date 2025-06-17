@@ -78,4 +78,23 @@ public class MessageTreeDto
         Console.WriteLine("found Pagination Info: " + nextId + ", " + previousId + ", " + messageKeys.Count + ", " + index);
         return (nextId, previousId, messageKeys.Count, index);
     }
+
+    public int GetBranchFromMessage(int id)
+    {
+        var message = Messages.Values.First(m => m.Message.Id == id);
+        //find the newest message
+        while (true)
+        {
+            var nextMessages = NextMessages.GetValueOrDefault(message!.Message.Id);
+            if (nextMessages != null && nextMessages.Count > 0)
+            {
+                // If there are next messages, return the first one
+                message = nextMessages.MaxBy(x => x.Message.CreatedAt);
+            }
+            else
+            {
+                return message.Message.Id;
+            }
+        }
+    }
 }

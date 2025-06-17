@@ -30,6 +30,7 @@
                 OnMessageContentChanged="OnMessageContentChanged"
                 OnRegenerateMessage="RegenerateMessage"
                 OnSuggestionClicked="HandleSuggestionClick"
+                OnBranchSelected="HandleBranchSelected"
             />
         }
     </div>
@@ -258,4 +259,12 @@
     {
         await JSRuntime.InvokeVoidAsync("scrollChatToBottom");
     }
+
+    private async Task HandleBranchSelected(int id)
+    {
+        currentBranchPath = messageTree!.GetBranchFromMessage(id);
+        currentBranch = messageTree.GetMessagesForBranch(currentBranchPath);
+        StateHasChanged();
+    }
+
 } 
