@@ -2,14 +2,15 @@
 
 <div class="color-picker-container">
     <MudTextField 
-        @bind-Value="@Value" 
+        T="string"
+        Value="@Value"
+        ValueChanged="@OnTextFieldValueChanged"
         Label="@Label"
         Placeholder="@Placeholder"
         Variant="Variant.Outlined"
         Adornment="Adornment.Start"
         AdornmentIcon="@Icon"
         AdornmentColor="@AdornmentColor"
-        OnBlur="@OnColorChanged"
         Class="color-input-field" />
     
     <div class="color-picker-actions">
@@ -34,8 +35,20 @@
     [Parameter] public string Icon { get; set; } = Icons.Material.Filled.Palette;
     [Parameter] public Color AdornmentColor { get; set; } = Color.Default;
     [Parameter] public EventCallback OnColorChanged { get; set; }
-
+    
     private ElementReference colorInput;
+
+    private async Task OnTextFieldValueChanged(string newValue)
+    {
+        // Validate and format the color value
+        var formattedColor = FormatColorValue(newValue);
+        
+        // Update the value and notify parent
+        Value = formattedColor;
+        await ValueChanged.InvokeAsync(Value);
+        await OnColorChanged.InvokeAsync();
+        StateHasChanged();
+    }
 
     private async Task OpenColorPicker()
     {
@@ -45,15 +58,32 @@
     private async Task OnColorInputChanged(ChangeEventArgs e)
     {
         var newColor = e.Value?.ToString() ?? "#000000";
+        var formattedColor = FormatColorValue(newColor);
         
-        // Ensure the color is in the correct format
-        if (!newColor.StartsWith("#"))
-            newColor = "#" + newColor;
-            
-        Value = newColor;
+        Value = formattedColor;
         await ValueChanged.InvokeAsync(Value);
         await OnColorChanged.InvokeAsync();
         StateHasChanged();
+    }
+
+    private string FormatColorValue(string color)
+    {
+        if (string.IsNullOrWhiteSpace(color))
+            return "#000000";
+            
+        // Remove any whitespace
+        color = color.Trim();
+        
+        // Ensure the color starts with #
+        if (!color.StartsWith("#"))
+            color = "#" + color;
+            
+        // Validate hex format (basic validation)
+        if (color.Length == 7 && color.All(c => c == '#' || "0123456789ABCDEFabcdef".Contains(c)))
+            return color.ToUpper();
+        
+        // If invalid, return the current value or default
+        return Value ?? "#000000";
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
