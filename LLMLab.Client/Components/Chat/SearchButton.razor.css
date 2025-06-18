@@ -25,8 +25,8 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: 
-        linear-gradient(135deg, 
+    background:
+            linear-gradient(135deg,
             color-mix(in srgb, var(--mud-palette-primary) 6%, transparent) 0%,
             color-mix(in srgb, var(--mud-palette-primary) 3%, transparent) 100%);
     opacity: 0;
@@ -40,10 +40,10 @@
     left: -2px;
     right: -2px;
     bottom: -2px;
-    background: linear-gradient(135deg, 
-        var(--mud-palette-primary) 0%,
-        color-mix(in srgb, var(--mud-palette-primary) 70%, white) 50%,
-        var(--mud-palette-primary) 100%);
+    background: linear-gradient(135deg,
+    var(--mud-palette-primary) 0%,
+    color-mix(in srgb, var(--mud-palette-primary) 70%, white) 50%,
+    var(--mud-palette-primary) 100%);
     border-radius: 14px;
     opacity: 0;
     z-index: -1;
@@ -54,9 +54,9 @@
     transform: translateY(-1px);
     border-color: transparent;
     color: white;
-    box-shadow: 
-        0 4px 12px color-mix(in srgb, var(--mud-palette-primary) 15%, transparent),
-        0 2px 6px rgba(0, 0, 0, 0.08);
+    box-shadow:
+            0 4px 12px color-mix(in srgb, var(--mud-palette-primary) 15%, transparent),
+            0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .hypermodern-search-btn:hover::before {
@@ -71,15 +71,26 @@
     transform: translateY(0);
 }
 
+/* UPDATED btn-content for space-between layout */
 .btn-content {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    position: relative;
-    z-index: 1;
+    justify-content: space-between; /* spread left and right */
+    height: 100%;
+    width: 100%;
+    padding-left: 12px;
+    padding-right: 12px; /* add right padding for symmetry */
+    box-sizing: border-box;
 }
 
+/* LEFT GROUP: icon and text */
+.btn-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ICON */
 .btn-icon {
     width: 14px;
     height: 14px;
@@ -94,4 +105,28 @@
     font-weight: 600;
     letter-spacing: 0.03em;
     transition: all 0.3s ease;
-} 
+}
+
+/* SHORTCUT KEYS GROUP */
+.btn-shortcut {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Keyboard shortcut "keys" style */
+.kbd {
+    font-family: inherit;
+    font-size: 11px;
+    background: rgba(180, 180, 180, 0.18);
+    border: 1px solid rgba(100,100,100,0.14);
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: var(--mud-palette-text-secondary, #666);
+    box-shadow: 0 1px 1px rgba(0,0,0,0.03);
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    user-select: none;
+    margin-left: 2px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

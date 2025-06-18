@@ -74,10 +74,18 @@
 .btn-content {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    height: 100%;
+    width: 100%;
+    padding-left: 12px;
+    padding-right: 12px;
+    box-sizing: border-box;
+}
+
+.btn-left {
+    display: flex;
+    align-items: center;
     gap: 8px;
-    position: relative;
-    z-index: 1;
 }
 
 .btn-icon {
@@ -94,4 +102,26 @@
     font-weight: 600;
     letter-spacing: 0.03em;
     transition: all 0.3s ease;
+}
+
+.btn-shortcut {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.kbd {
+    font-family: inherit;
+    font-size: 11px;
+    background: rgba(180, 180, 180, 0.18);
+    border: 1px solid rgba(100,100,100,0.14);
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: var(--mud-palette-text-secondary, #666);
+    box-shadow: 0 1px 1px rgba(0,0,0,0.03);
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    user-select: none;
+    margin-left: 2px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 } 

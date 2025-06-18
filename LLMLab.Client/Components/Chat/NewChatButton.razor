@@ -1,12 +1,44 @@
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
 <button class="hypermodern-new-chat-btn" @onclick="OnClick">
     <div class="btn-content">
-        <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-        </svg>
-        <span class="btn-text">NEW CHAT</span>
+        <div class="btn-left">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            <span class="btn-text">NEW CHAT</span>
+        </div>
+        <div class="btn-shortcut">
+            <span class="kbd" @ref="shortcutRef">@(IsMac ? "⌘" : "Ctrl+")B</span>
+        </div>
     </div>
 </button>
 
 @code {
     [Parameter] public EventCallback OnClick { get; set; }
+    
+    private ElementReference shortcutRef;
+    private Action? cleanupShortcut;
+    private bool IsMac;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Detect platform for shortcut display using safe function
+        IsMac = await JSRuntime.InvokeAsync<bool>("isMacPlatform");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Register visual feedback for Ctrl/Cmd+B shortcut
+            cleanupShortcut = await JSRuntime.InvokeAsync<Action>("registerShortcutVisual", "ctrl+b", shortcutRef);
+        }
+    }
+
+    public void Dispose()
+    {
+        cleanupShortcut?.Invoke();
+    }
 } 
