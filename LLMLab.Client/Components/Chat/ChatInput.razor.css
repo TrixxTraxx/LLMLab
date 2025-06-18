@@ -1164,21 +1164,31 @@
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 0;
-    height: 0;
-    background: rgba(32,32,32,0.35);
+    width: 28px;
+    height: 28px;
+    background: rgba(32,32,32,0.85);
     border-radius: 50%;
-    transform: translate(-50%, -50%) scale(0.5);
+    transform: translate(-50%, -50%) scale(1);
     opacity: 0;
     pointer-events: none;
-    transition: width 0.38s cubic-bezier(0.4,0,0.2,1), height 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.22s cubic-bezier(0.4,0,0.2,1), transform 0.38s cubic-bezier(0.4,0,0.2,1);
+    transition:
+            width 0.3s cubic-bezier(0.4,0,0.2,1),
+            height 0.3s cubic-bezier(0.4,0,0.2,1),
+            opacity 0s,
+            transform 0.3s cubic-bezier(0.4,0,0.2,1);
     z-index: 0;
 }
-.scroll-to-bottom-btn-in-input:active::after {
-    width: 64px;
-    height: 64px;
-    opacity: 0.85;
-    transform: translate(-50%, -50%) scale(1.18);
+.scroll-to-bottom-btn-in-input.ripple-active::after {
+    width: 60px;
+    height: 60px;
+    opacity: 0.4;
+    background: rgba(32,32,32,0.93);
+    transform: translate(-50%, -50%) scale(1.23);
+    transition:
+            width 0.3s cubic-bezier(0.4,0,0.2,1),
+            height 0.3s cubic-bezier(0.4,0,0.2,1),
+            opacity 0.1s cubic-bezier(0.4,0,0.2,1),
+            transform 0.3s cubic-bezier(0.4,0,0.2,1);
 }
 .scroll-to-bottom-btn-in-input svg {
     display: block;
@@ -1188,16 +1198,15 @@
 .scroll-to-bottom-btn-in-input:hover {
     transform: scale(1.08) translateY(-2px);
 }
-
-.hypermodern-chat-input-wrapper {
-    position: relative;
-}
-
 @media (max-width: 768px) {
     .scroll-to-bottom-btn-in-input {
         right: 12px;
         bottom: 12px;
     }
+}
+
+.hypermodern-chat-input-wrapper {
+    position: relative;
 }
 
 /* ==============================================
