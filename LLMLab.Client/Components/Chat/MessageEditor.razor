@@ -6,6 +6,7 @@
 @inject AttachmentService AttachmentService
 @inject SettingsService SettingsService
 @inject ISnackbar Snackbar
+@inject FileUtilityService FileUtility
 
 <div class="message-editor-container">
     @if (isUploading && pendingUploads > 0)
@@ -21,7 +22,7 @@
             value="@editedText"
             @oninput="OnInput"
             @onkeydown="HandleKeyDown"
-            placeholder="Edit your message..."
+            placeholder="Edit your message or paste files..."
             disabled="@IsSaving"
             class="message-editor-textarea"
             rows="3"
@@ -78,7 +79,7 @@
             {
                 <div class="attachment-chip" key="@attachment.Id">
                     <div class="attachment-icon">
-                        @if (IsImageAttachment(attachment.ContentType))
+                        @if (FileUtility.IsImageFile(attachment.ContentType))
                         {
                             <svg viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M21 19V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 19 20.1 19 19ZM8.5 13.5L11 16.51L14.5 12L19 18H5L8.5 13.5Z"/>
@@ -154,6 +155,15 @@
         await JSRuntime.InvokeVoidAsync("autoResizeTextarea", TextareaRef);
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Set up paste file upload functionality
+            await JSRuntime.InvokeVoidAsync("setupPasteFileUpload", TextareaRef, DotNetObjectReference.Create(this));
+        }
+    }
+
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Escape")
@@ -198,23 +208,19 @@
             try
             {
                 // Check file size (1MB limit)
-                if (file.Size > 1024 * 1024)
+                if (!FileUtility.IsFileSizeValid(file.Size, 1024 * 1024))
                 {
                     Snackbar.Add($"File {file.Name} is too large. Maximum size is 1MB.", Severity.Error);
                     pendingUploads--;
                     continue;
                 }
                 
-                // Check if file already exists
-                if (editedAttachments.Any(a => a.FileName == file.Name))
-                {
-                    Snackbar.Add($"File {file.Name} is already uploaded.", Severity.Warning);
-                    pendingUploads--;
-                    continue;
-                }
+                // Generate unique filename if duplicate exists
+                var existingFileNames = editedAttachments.Select(a => a.FileName);
+                var uniqueFileName = FileUtility.GenerateUniqueFileName(file.Name, existingFileNames);
 
                 // Check if current model supports the file type for images
-                if (IsImageAttachment(file.ContentType) && !SelectedModelSupportsImages())
+                if (FileUtility.IsImageFile(file.ContentType) && !SelectedModelSupportsImages())
                 {
                     Snackbar.Add($"The selected model does not support image files. Please select a different model or remove the image.", Severity.Error);
                     pendingUploads--;
@@ -222,15 +228,19 @@
                 }
 
                 // Additional validation: Check if file type is in supported content types
-                if (!IsFileTypeSupported(file.ContentType))
+                var currentModel = aiModels.FirstOrDefault(m => m.Id == CurrentModelId);
+                if (!FileUtility.IsFileTypeSupported(file.ContentType, currentModel?.SupportedContentTypes))
                 {
                     Snackbar.Add($"File type '{file.ContentType}' is not supported by the selected model", Severity.Error);
                     pendingUploads--;
                     continue;
                 }
                 
+                // Create a wrapper with unique filename if needed
+                var fileToUpload = uniqueFileName != file.Name ? FileUtility.CreateRenamedFile(file, uniqueFileName) : file;
+                
                 // Upload immediately
-                var attachment = await AttachmentService.UploadAttachment(file);
+                var attachment = await AttachmentService.UploadAttachment(fileToUpload);
                 if (attachment != null)
                 {
                     editedAttachments.Add(attachment);
@@ -255,6 +265,100 @@
     {
         editedAttachments.Remove(attachment);
         StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task HandlePastedFiles(PastedFileData[] fileDataArray)
+    {
+        try
+        {
+            if (fileDataArray == null || fileDataArray.Length == 0)
+            {
+                return;
+            }
+
+            // Check if model supports file uploads
+            if (!SelectedModelSupportsFiles())
+            {
+                Snackbar.Add($"The selected model does not support file attachments.", Severity.Error);
+                return;
+            }
+
+            isUploading = true;
+            pendingUploads = fileDataArray.Length;
+            StateHasChanged();
+
+            foreach (var fileData in fileDataArray)
+            {
+                try
+                {
+                    // Check file size (1MB limit)
+                    if (!FileUtility.IsFileSizeValid(fileData.Size, 1024 * 1024))
+                    {
+                        Snackbar.Add($"Pasted file is too large. Maximum size is 1MB.", Severity.Error);
+                        pendingUploads--;
+                        continue;
+                    }
+
+                    // Generate unique filename if duplicate exists
+                    var existingFileNames = editedAttachments.Select(a => a.FileName);
+                    var uniqueFileName = FileUtility.GenerateUniqueFileName(fileData.Name, existingFileNames);
+                    
+                    // Update the file data with unique filename
+                    if (uniqueFileName != fileData.Name)
+                    {
+                        fileData.Name = uniqueFileName;
+                    }
+
+                    // Check if current model supports the file type for images
+                    if (FileUtility.IsImageFile(fileData.Type) && !SelectedModelSupportsImages())
+                    {
+                        Snackbar.Add($"The selected model does not support image files.", Severity.Error);
+                        pendingUploads--;
+                        continue;
+                    }
+
+                    // Check if file type is supported
+                    var currentModel = aiModels.FirstOrDefault(m => m.Id == CurrentModelId);
+                    if (!FileUtility.IsFileTypeSupported(fileData.Type, currentModel?.SupportedContentTypes))
+                    {
+                        Snackbar.Add($"File type '{fileData.Type}' is not supported by the selected model", Severity.Error);
+                        pendingUploads--;
+                        continue;
+                    }
+
+                    // Create a wrapper around the file data
+                    var browserFile = new JSBrowserFile(fileData);
+                    
+                    // Upload the file
+                    var attachment = await AttachmentService.UploadAttachment(browserFile);
+                    if (attachment != null)
+                    {
+                        editedAttachments.Add(attachment);
+                        Snackbar.Add($"Pasted file uploaded successfully", Severity.Success);
+                    }
+
+                    pendingUploads--;
+                    StateHasChanged();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error uploading pasted file: {ex.Message}");
+                    Snackbar.Add($"Error uploading pasted file: {ex.Message}", Severity.Error);
+                    pendingUploads--;
+                }
+            }
+
+            isUploading = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error handling pasted files: {ex.Message}");
+            Snackbar.Add($"Error handling pasted files: {ex.Message}", Severity.Error);
+            isUploading = false;
+            StateHasChanged();
+        }
     }
 
     private async Task SaveEdit()
@@ -295,19 +399,9 @@
         return model?.HasImageSupport == true;
     }
 
-    private bool IsImageAttachment(string contentType)
+    public void Dispose()
     {
-        return contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private bool IsFileTypeSupported(string contentType)
-    {
-        var model = aiModels.FirstOrDefault(m => m.Id == CurrentModelId);
-        if (model?.SupportedContentTypes?.Any() == true)
-        {
-            return model.SupportedContentTypes.Any(supportedType => 
-                contentType.StartsWith(supportedType));
-        }
-        return true; // If no supported types specified, allow all
+        // Clean up paste event handler
+        JSRuntime.InvokeVoidAsync("removePasteFileUpload", TextareaRef);
     }
 } 

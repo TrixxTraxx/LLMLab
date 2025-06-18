@@ -7,6 +7,7 @@
 @inject SettingsService SettingsService
 @inject ISnackbar Snackbar
 @inject GenerationService GenerationService
+@inject FileUtilityService FileUtility
 
 <div class="hypermodern-chat-input-wrapper">
     <div class="hypermodern-input-container">
@@ -18,7 +19,7 @@
                     {
                         <div class="attachment-chip" key="@attachment.Id">
                             <div class="attachment-icon">
-                                @if (IsImageAttachment(attachment.ContentType))
+                                @if (FileUtility.IsImageFile(attachment.ContentType))
                                 {
                                     <svg viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M21 19V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 19 20.1 19 19ZM8.5 13.5L11 16.51L14.5 12L19 18H5L8.5 13.5Z"/>
@@ -368,7 +369,7 @@
             try
             {
                 // Check file size (1MB limit)
-                if (file.Size > 1024 * 1024)
+                if (!FileUtility.IsFileSizeValid(file.Size, 1024 * 1024))
                 {
                     Snackbar.Add($"File {file.Name} is too large. Maximum size is 1MB.", Severity.Error);
                     pendingUploads--;
@@ -376,10 +377,11 @@
                 }
                 
                 // Generate unique filename if duplicate exists
-                var uniqueFileName = GenerateUniqueFileName(file.Name);
+                var existingFileNames = uploadedAttachments.Select(a => a.FileName);
+                var uniqueFileName = FileUtility.GenerateUniqueFileName(file.Name, existingFileNames);
 
                 // Check if current model supports the file type for images
-                if (IsImageAttachment(file.ContentType) && !SelectedModelSupportsImages())
+                if (FileUtility.IsImageFile(file.ContentType) && !SelectedModelSupportsImages())
                 {
                     Snackbar.Add($"The selected model '{GetSelectedModelName()}' does not support image files. Please select a different model or remove the image.", Severity.Error);
                     pendingUploads--;
@@ -387,7 +389,8 @@
                 }
 
                 // Additional validation: Check if file type is in supported content types
-                if (!IsFileTypeSupported(file.ContentType))
+                var currentModel = aiModels.FirstOrDefault(m => m.Id == selectedModelId);
+                if (!FileUtility.IsFileTypeSupported(file.ContentType, currentModel?.SupportedContentTypes))
                 {
                     Snackbar.Add($"File type '{file.ContentType}' is not supported by the selected model '{GetSelectedModelName()}'", Severity.Error);
                     pendingUploads--;
@@ -395,7 +398,7 @@
                 }
                 
                 // Create a wrapper with unique filename if needed
-                var fileToUpload = uniqueFileName != file.Name ? new RenamedBrowserFile(file, uniqueFileName) : file;
+                var fileToUpload = uniqueFileName != file.Name ? FileUtility.CreateRenamedFile(file, uniqueFileName) : file;
                 
                 // Upload immediately
                 var attachment = await AttachmentService.UploadAttachment(fileToUpload);
@@ -445,7 +448,7 @@
                 try
                 {
                     // Check file size (1MB limit)
-                    if (fileData.Size > 1024 * 1024)
+                    if (!FileUtility.IsFileSizeValid(fileData.Size, 1024 * 1024))
                     {
                         Snackbar.Add($"Pasted file is too large. Maximum size is 1MB.", Severity.Error);
                         pendingUploads--;
@@ -453,7 +456,8 @@
                     }
 
                     // Generate unique filename if duplicate exists
-                    var uniqueFileName = GenerateUniqueFileName(fileData.Name);
+                    var existingFileNames = uploadedAttachments.Select(a => a.FileName);
+                    var uniqueFileName = FileUtility.GenerateUniqueFileName(fileData.Name, existingFileNames);
                     
                     // Update the file data with unique filename
                     if (uniqueFileName != fileData.Name)
@@ -462,7 +466,7 @@
                     }
 
                     // Check if current model supports the file type for images
-                    if (IsImageAttachment(fileData.Type) && !SelectedModelSupportsImages())
+                    if (FileUtility.IsImageFile(fileData.Type) && !SelectedModelSupportsImages())
                     {
                         Snackbar.Add($"The selected model '{GetSelectedModelName()}' does not support image files.", Severity.Error);
                         pendingUploads--;
@@ -470,7 +474,8 @@
                     }
 
                     // Check if file type is supported
-                    if (!IsFileTypeSupported(fileData.Type))
+                    var currentModel = aiModels.FirstOrDefault(m => m.Id == selectedModelId);
+                    if (!FileUtility.IsFileTypeSupported(fileData.Type, currentModel?.SupportedContentTypes))
                     {
                         Snackbar.Add($"File type '{fileData.Type}' is not supported by the selected model '{GetSelectedModelName()}'", Severity.Error);
                         pendingUploads--;
@@ -509,31 +514,6 @@
             isUploading = false;
             StateHasChanged();
         }
-    }
-
-    private string GenerateUniqueFileName(string originalFileName)
-    {
-        var existingNames = uploadedAttachments.Select(a => a.FileName).ToHashSet();
-        
-        if (!existingNames.Contains(originalFileName))
-        {
-            return originalFileName;
-        }
-        
-        // Split filename and extension
-        var nameWithoutExtension = Path.GetFileNameWithoutExtension(originalFileName);
-        var extension = Path.GetExtension(originalFileName);
-        
-        var counter = 1;
-        string uniqueName;
-        
-        do
-        {
-            uniqueName = $"{nameWithoutExtension} ({counter}){extension}";
-            counter++;
-        } while (existingNames.Contains(uniqueName));
-        
-        return uniqueName;
     }
 
     private void RemoveAttachment(AttachmentDto attachment)
@@ -629,40 +609,6 @@
     {
         var model = aiModels.FirstOrDefault(m => m.Id == selectedModelId);
         return model?.HasImageSupport == true;
-    }
-
-    private bool IsImageAttachment(string contentType)
-    {
-        return contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private bool IsFileTypeSupported(string contentType)
-    {
-        var model = aiModels.FirstOrDefault(m => m.Id == selectedModelId);
-        if (model == null || string.IsNullOrEmpty(model.SupportedContentTypes))
-        {
-            // If no supported content types are defined, allow all file types
-            return true;
-        }
-
-        // Parse supported content types (assuming comma-separated list)
-        var supportedTypes = model.SupportedContentTypes.Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(t => t.Trim().ToLowerInvariant())
-            .ToList();
-
-        // Check if content type matches any of the supported types
-        var normalizedContentType = contentType.ToLowerInvariant();
-        
-        return supportedTypes.Any(supportedType =>
-        {
-            // Support wildcard patterns like "image/*" or exact matches
-            if (supportedType.EndsWith("/*"))
-            {
-                var prefix = supportedType.Substring(0, supportedType.Length - 2);
-                return normalizedContentType.StartsWith(prefix + "/");
-            }
-            return normalizedContentType == supportedType;
-        });
     }
 
     private void ToggleReasoningModal()

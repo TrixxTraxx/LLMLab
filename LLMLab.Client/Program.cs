@@ -24,6 +24,7 @@ builder.Services.AddScoped<MessageSyncService>();
 builder.Services.AddScoped<AiModelService>();
 builder.Services.AddScoped<AttachmentService>();
 builder.Services.AddScoped<AiKeyService>();
+builder.Services.AddScoped<FileUtilityService>();
 builder.Services.AddTransient<GenerationService>();
 builder.Services.AddTransient<ThreadSignalRService>();
 builder.Services.AddSingleton<ImageModalService>();
