@@ -8,17 +8,38 @@ This project was written for the T3 Chat Cloneathon https://t3.gg/chat-cloneatho
 
 ## Features
 
--   **Message Threads**: Create and manage threads for conversations with AI models.
--   **Message Syncing**: Sync messages between the server and client in real-time.
--   **Attachments**: Upload and attach files to messages.
--   **Syntax Highlighting**: Supports syntax highlighting for code snippets in messages.
--   **Message Streaming**: Send messages to AI models and receive responses in real-time.
--   **Resumable Streaming**: Continue receiving responses from AI models even after a connection is lost.
--   **Model Selection**: Choose from various AI models to interact with.
--   **Theme Support**: Light and dark themes for the user interface, including a custom theme editor.
--   **Bring Your Own Keys**: Use your own API keys for different AI models.
--   **Encryption**: All your messages and API keys are encrypted using AES-128-CBC encryption, ensuring that your data is secure.
+Of course! Here is the updated feature list, combining and reformatting the new points into a clean, comprehensive overview.
 
+***
+
+### Core Features
+
+Here is a complete list of the application's features:
+
+#### 💬 Chat & Messaging
+*   **Message Threads**: Create, manage, and branch conversations.
+*   **Chat Branching**: Easily create alternative message histories within threads and even across different threads.
+*   **Message Editing**: Edit your messages after they have been sent.
+*   **Attachments**: Full support for uploading and attaching files to your messages.
+*   **Rich Formatting**: Automatic syntax highlighting for Markdown, LaTeX, and a wide variety of programming languages in code blocks.
+
+#### 🔄 Syncing & Performance
+*   **Instant Syncing**: Messages and threads sync instantly across all your browsers and tabs.
+*   **Local Caching**: Messages are synced locally for blazing-fast load times.
+*   **Multi-Streaming**: Stream a single AI response to multiple browsers or tabs simultaneously.
+*   **Resumable Streams**: If your connection drops, the AI's response will automatically resume where it left off once reconnected.
+
+#### 🤖 AI Model Integration
+*   **Multi-Model Support**: Seamlessly switch between and chat with a variety of different AI models.
+*   **Bring Your Own Key (BYOK)**: Use your own personal API keys to access a wide range of AI models.
+
+#### 🎨 Customization & Usability
+*   **Advanced Theming**: Choose from a wide variety of beautiful built-in themes or create your very own with the theme editor.
+*   **Thread Search**: Quickly find conversations by searching through thread titles.
+*   **One-Click Sharing**: Share your chats with others using a single click.
+
+#### 🔒 Security
+*   **Encryption**: All of your messages and API keys are encrypted in the database.
 ## Tech Stack
 
 -   **Backend**: ASP.NET Core 9.0, Entity Framework Core, SignalR
