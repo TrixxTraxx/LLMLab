@@ -195,6 +195,77 @@
             "purple", 
             new("Purple", "#8b5cf6", "#7c3aed", "#0f0a1a", "#1a1625", "#FFFFFF", "#B0B0B0")
         },
+        // Light Themes
+        {
+            "lightBlue", 
+            new("Light Blue", "#0ea5e9", "#0284c7", "#f0f9ff", "#e0f2fe", "#0f172a", "#475569")
+        },
+        {
+            "lightGreen", 
+            new("Light Green", "#22c55e", "#16a34a", "#f0fdf4", "#dcfce7", "#14532d", "#365314")
+        },
+        {
+            "lightPurple", 
+            new("Light Purple", "#a855f7", "#9333ea", "#faf5ff", "#f3e8ff", "#581c87", "#7c2d12")
+        },
+        {
+            "lightOrange", 
+            new("Light Orange", "#f97316", "#ea580c", "#fff7ed", "#fed7aa", "#9a3412", "#c2410c")
+        },
+        {
+            "lightCyan", 
+            new("Light Cyan", "#06b6d4", "#0891b2", "#ecfeff", "#cffafe", "#164e63", "#0e7490")
+        },
+        // Very Dark Themes
+        {
+            "voidBlack", 
+            new("Void Black", "#6366f1", "#8b5cf6", "#000000", "#0a0a0a", "#FFFFFF", "#888888")
+        },
+        {
+            "deepSpace", 
+            new("Deep Space", "#3b82f6", "#6366f1", "#020617", "#0f172a", "#e2e8f0", "#64748b")
+        },
+        {
+            "darkForest", 
+            new("Dark Forest", "#059669", "#065f46", "#064e3b", "#0f766e", "#ecfccb", "#86efac")
+        },
+        {
+            "midnight", 
+            new("Midnight", "#7c3aed", "#a855f7", "#0c0a09", "#1c1917", "#fbbf24", "#a3a3a3")
+        },
+        {
+            "obsidian", 
+            new("Obsidian", "#ef4444", "#dc2626", "#0c0c0c", "#171717", "#f5f5f5", "#737373")
+        },
+        // Boring/Professional Themes
+        {
+            "corporate", 
+            new("Corporate", "#6b7280", "#4b5563", "#f9fafb", "#f3f4f6", "#111827", "#6b7280")
+        },
+        {
+            "minimal", 
+            new("Minimal", "#374151", "#4b5563", "#ffffff", "#f9fafb", "#1f2937", "#6b7280")
+        },
+        {
+            "professional", 
+            new("Professional", "#1f2937", "#374151", "#f8fafc", "#f1f5f9", "#0f172a", "#475569")
+        },
+        {
+            "grayscale", 
+            new("Grayscale", "#525252", "#404040", "#fafafa", "#f5f5f5", "#171717", "#525252")
+        },
+        {
+            "business", 
+            new("Business", "#475569", "#334155", "#f8fafc", "#e2e8f0", "#1e293b", "#64748b")
+        },
+        {
+            "classic", 
+            new("Classic", "#4f46e5", "#6366f1", "#ffffff", "#f8fafc", "#1e293b", "#475569")
+        },
+        {
+            "neutral", 
+            new("Neutral", "#71717a", "#52525b", "#fafafa", "#f4f4f5", "#27272a", "#71717a")
+        },
         {
             "custom", 
             new("Custom", "#9333ea", "#7c3aed", "#1a1a1a", "#2a2a2a", "#FFFFFF", "#B0B0B0")
@@ -255,12 +326,88 @@
                     warningColor = "#d97706";
                     infoColor = "#2563eb";
                     break;
+                    
+                // Light theme variations
+                case "lightBlue":
+                    textColor = "#0f172a";
+                    secondaryTextColor = "#475569";
+                    successColor = "#059669";
+                    errorColor = "#dc2626";
+                    warningColor = "#d97706";
+                    infoColor = "#0284c7";
+                    break;
+                case "lightGreen":
+                    textColor = "#14532d";
+                    secondaryTextColor = "#365314";
+                    successColor = "#16a34a";
+                    errorColor = "#dc2626";
+                    warningColor = "#d97706";
+                    infoColor = "#0284c7";
+                    break;
+                case "lightPurple":
+                    textColor = "#581c87";
+                    secondaryTextColor = "#7c2d12";
+                    successColor = "#059669";
+                    errorColor = "#dc2626";
+                    warningColor = "#d97706";
+                    infoColor = "#9333ea";
+                    break;
+                case "lightOrange":
+                    textColor = "#9a3412";
+                    secondaryTextColor = "#c2410c";
+                    successColor = "#059669";
+                    errorColor = "#dc2626";
+                    warningColor = "#ea580c";
+                    infoColor = "#0284c7";
+                    break;
+                case "lightCyan":
+                    textColor = "#164e63";
+                    secondaryTextColor = "#0e7490";
+                    successColor = "#059669";
+                    errorColor = "#dc2626";
+                    warningColor = "#d97706";
+                    infoColor = "#0891b2";
+                    break;
+                    
                 case "dark":
                     successColor = "#10b981";
                     errorColor = "#ef4444";
                     warningColor = "#f59e0b";
                     infoColor = "#3b82f6";
                     break;
+                    
+                // Very dark themes
+                case "voidBlack":
+                    successColor = "#10b981";
+                    errorColor = "#ef4444";
+                    warningColor = "#f59e0b";
+                    infoColor = "#8b5cf6";
+                    break;
+                case "deepSpace":
+                    successColor = "#22c55e";
+                    errorColor = "#ef4444";
+                    warningColor = "#f59e0b";
+                    infoColor = "#6366f1";
+                    break;
+                case "darkForest":
+                    successColor = "#86efac";
+                    errorColor = "#f87171";
+                    warningColor = "#fbbf24";
+                    infoColor = "#60a5fa";
+                    break;
+                case "midnight":
+                    successColor = "#a78bfa";
+                    errorColor = "#f472b6";
+                    warningColor = "#fbbf24";
+                    infoColor = "#a855f7";
+                    break;
+                case "obsidian":
+                    successColor = "#10b981";
+                    errorColor = "#dc2626";
+                    warningColor = "#f59e0b";
+                    infoColor = "#3b82f6";
+                    break;
+                    
                 case "green":
                     successColor = "#34d399";
                     errorColor = "#f87171";
@@ -273,6 +420,26 @@
                     warningColor = "#fbbf24";
                     infoColor = "#60a5fa";
                     break;
+                    
+                // Professional/boring themes
+                case "corporate":
+                case "minimal":
+                case "professional":
+                case "business":
+                case "classic":
+                    successColor = "#059669";
+                    errorColor = "#dc2626";
+                    warningColor = "#d97706";
+                    infoColor = "#2563eb";
+                    break;
+                case "grayscale":
+                case "neutral":
+                    successColor = "#525252";
+                    errorColor = "#404040";
+                    warningColor = "#737373";
+                    infoColor = "#71717a";
+                    break;
+                    
                 default: // default theme
                     successColor = "#10b981";
                     errorColor = "#ef4444";
