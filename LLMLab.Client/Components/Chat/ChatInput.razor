@@ -220,6 +220,17 @@
             </div> -->
         }
     </div>
+
+    @if (ShowScrollToBottomButton)
+    {
+        <button class="scroll-to-bottom-btn-in-input" title="Scroll to bottom" @onclick="() => OnScrollToBottom.InvokeAsync()">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <circle cx="14" cy="14" r="13" fill="rgba(32,32,32,0.75)" />
+                <path d="M9 13l5 5 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M14 7v11" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </button>
+    }
 </div>
 
 <!-- Hidden file input -->
@@ -240,6 +251,8 @@
     [Parameter] public EventCallback<ChatAttachment> OnAttachmentAdded { get; set; }
     [Parameter] public bool IsLoading { get; set; }
     [Parameter] public bool IsLastMessageComplete { get; set; }
+    [Parameter] public bool ShowScrollToBottomButton { get; set; } = false;
+    [Parameter] public EventCallback OnScrollToBottom { get; set; }
     
     private List<AiModelDto> aiModels = new List<AiModelDto>();
     private List<AttachmentDto> uploadedAttachments = new List<AttachmentDto>();
