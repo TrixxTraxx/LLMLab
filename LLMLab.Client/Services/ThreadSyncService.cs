@@ -3,6 +3,7 @@ using System.Text.Json;
 using LLMLab.Client.Caches;
 using LLMLab.Dtos.Threads;
 using MudBlazor;
+using System.Threading;
 
 namespace LLMLab.Client.Services;
 
@@ -17,6 +18,8 @@ public class ThreadSyncService
     private bool _disableThreadSyncErrors = false;
     
     public Action<List<ThreadCache>>? ThreadsUpdated;
+
+    private readonly SemaphoreSlim _updateLock = new(1, 1);
 
     public ThreadSyncService(HttpClient http, StorageService storageService, ISnackbar snackbar)
     {
@@ -94,77 +97,85 @@ public class ThreadSyncService
 
     private async Task UpdateThreadCaches(Action<List<ThreadCache>> update)
     {
-        var threadCacheCollection = await GetThreadCollection();
-        
-        // call /api/Threads?clientVersion=threadCacheCollection.ClientVersion
-        var response = await _http.GetAsync($"api/Threads?clientVersion={threadCacheCollection.ClientVersion}");
-
-        if (!response.IsSuccessStatusCode)
+        await _updateLock.WaitAsync();
+        try
         {
-            if(!_disableThreadSyncErrors) {
-                //something went very wrong
-                _snackbar.Add("Failed to sync threads", Severity.Error);
-            }
-            return;
-        }
-        
-        var updateDto = await response.Content.ReadFromJsonAsync<ThreadUpdateDto>();
-        
-        //Console.WriteLine($"Updating {updateDto!.UpdatedThreads.Count} threads");
+            var threadCacheCollection = await GetThreadCollection();
+            
+            // call /api/Threads?clientVersion=threadCacheCollection.ClientVersion
+            var response = await _http.GetAsync($"api/Threads?clientVersion={threadCacheCollection.ClientVersion}");
 
-        foreach (var thread in updateDto!.UpdatedThreads)
-        {
-            Console.WriteLine($"updating thread with Id: {thread.Id}");
-            try
+            if (!response.IsSuccessStatusCode)
             {
-                //find thread cache by id
-                var threadCache = _threadCaches.FirstOrDefault(tc => tc.Thread.Id == thread.Id);
-                if (threadCache == null)
+                if(!_disableThreadSyncErrors) {
+                    //something went very wrong
+                    _snackbar.Add("Failed to sync threads", Severity.Error);
+                }
+                return;
+            }
+            
+            var updateDto = await response.Content.ReadFromJsonAsync<ThreadUpdateDto>();
+            
+            //Console.WriteLine($"Updating {updateDto!.UpdatedThreads.Count} threads");
+
+            foreach (var thread in updateDto!.UpdatedThreads)
+            {
+                Console.WriteLine($"updating thread with Id: {thread.Id}");
+                try
                 {
-                    //create new thread cache
-                    threadCache = new ThreadCache()
+                    //find thread cache by id
+                    var threadCache = _threadCaches.FirstOrDefault(tc => tc.Thread.Id == thread.Id);
+                    if (threadCache == null)
                     {
-                        Thread = thread,
-                        LastUpdated = DateTime.Now
-                    };
-                    threadCacheCollection.ThreadIds.Add(thread.Id);
-                    Console.WriteLine($"Added thread with Id: {threadCache.Thread.Id}");
-                    _threadCaches.Add(threadCache);
+                        //create new thread cache
+                        threadCache = new ThreadCache()
+                        {
+                            Thread = thread,
+                            LastUpdated = DateTime.Now
+                        };
+                        threadCacheCollection.ThreadIds.Add(thread.Id);
+                        Console.WriteLine($"Added thread with Id: {threadCache.Thread.Id}");
+                        _threadCaches.Add(threadCache);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Updated thread with Id: {threadCache.Thread.Id}");
+                        //update existing thread cache
+                        threadCache.Thread = thread;
+                        threadCache.LastUpdated = DateTime.Now;
+                    }
+                    // Store the updated thread cache
+                    await StoreThreadCache(threadCache);
                 }
-                else
+                catch (Exception ex)
                 {
-                    Console.WriteLine($"Updated thread with Id: {threadCache.Thread.Id}");
-                    //update existing thread cache
-                    threadCache.Thread = thread;
-                    threadCache.LastUpdated = DateTime.Now;
+                    _snackbar.Add($"Error updating thread {thread.Id}: {ex.Message}", Severity.Error);
+                    Console.WriteLine(ex);
+                    continue;
                 }
-                // Store the updated thread cache
-                await StoreThreadCache(threadCache);
+                Console.WriteLine($"Thread {thread.Id} updated");
             }
-            catch (Exception ex)
-            {
-                _snackbar.Add($"Error updating thread {thread.Id}: {ex.Message}", Severity.Error);
-                Console.WriteLine(ex);
-                continue;
-            }
-            Console.WriteLine($"Thread {thread.Id} updated");
-        }
 
-        if (updateDto!.UpdatedThreads?.Any() ?? false)
-        {
-            try
+            if (updateDto!.UpdatedThreads?.Any() ?? false)
             {
-                //Console.WriteLine($"{_threadCaches.Count} Threads are up to date!");
-                update?.Invoke(_threadCaches);
+                try
+                {
+                    //Console.WriteLine($"{_threadCaches.Count} Threads are up to date!");
+                    update?.Invoke(_threadCaches);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
+            
+            threadCacheCollection.ClientVersion = updateDto!.UpdatedVersion;
+            await StoreThreadCacheCollection(threadCacheCollection);
         }
-        
-        threadCacheCollection.ClientVersion = updateDto!.UpdatedVersion;
-        await StoreThreadCacheCollection(threadCacheCollection);
+        finally
+        {
+            _updateLock.Release();
+        }
     }
 
     private async Task StoreThreadCache(ThreadCache threadCache)
