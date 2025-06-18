@@ -1,5 +1,7 @@
 # TRY A LIVE DEMO HERE: https://llmlab.chat
 
+![img_4.png](img_4.png)
+
 ## LLMLab
 
 This project is a web-based application for interacting with large language models (LLMs). It allows users to create and manage message threads, send messages, and receive responses from different AI models.
