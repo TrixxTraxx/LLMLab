@@ -1,13 +1,10 @@
-﻿namespace LLMLab.Dtos.User;
+namespace LLMLab.Dtos.User;
 
-public class UserDto
+public class UpdateUserDto
 {
-    public string Id { get; set; }
-    public string UserName { get; set; }
-    public string Email { get; set; }
-    public string ProfilePictureUrl { get; set; }
     public string DisplayName { get; set; }
     
+    //System Prompt Settings
     public string UserRole { get; set; } = "";
     public string UserSystemPrompt { get; set; } = string.Empty;
     public string[] UserSystemTraits { get; set; } = new string[0];

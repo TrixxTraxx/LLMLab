@@ -8,4 +8,6 @@ namespace LLMLab.Server.Mappers;
 public partial class UserMapper
 {
     public static partial UserDto Map(ApplicationUser user);
+    
+    public static partial void Map(UpdateUserDto updateUserDto, ApplicationUser user);
 }

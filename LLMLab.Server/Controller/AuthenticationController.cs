@@ -1,4 +1,5 @@
-﻿using LLMLab.Server.Data;
+﻿using LLMLab.Dtos.User;
+using LLMLab.Server.Data;
 using LLMLab.Server.Mappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -23,6 +24,27 @@ public class AuthenticationController : ControllerBase
         if (user == null)
         {
             return Unauthorized();
+        }
+
+        return Ok(UserMapper.Map(user));
+    }
+    
+    [HttpPut("user")]
+    public async Task<IActionResult> UpdateUser([FromBody] UpdateUserDto userDto)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        // Update the user properties
+        UserMapper.Map(userDto, user);
+
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            return BadRequest(result.Errors);
         }
 
         return Ok(UserMapper.Map(user));
