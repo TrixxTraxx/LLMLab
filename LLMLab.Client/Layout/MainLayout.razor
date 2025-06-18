@@ -6,6 +6,7 @@
 @inject ClientAuthenticationService ClientAuthenticationService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
+@inject SettingsService SettingsService
 
 <MyMudThemeProvider />
 <MudPopoverProvider />
@@ -99,16 +100,9 @@
         User = await ClientAuthenticationService.GetCurrentUser();
         _isMobile = await IsMobileDevice();
         
-        // Check for saved sidebar state in localStorage, default to closed on mobile
-        var savedSidebarState = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", "sidebarOpen");
-        if (!string.IsNullOrEmpty(savedSidebarState) && bool.TryParse(savedSidebarState, out bool savedState))
-        {
-            _drawerOpen = savedState;
-        }
-        else
-        {
-            _drawerOpen = !_isMobile; // Default: open on desktop, closed on mobile
-        }
+        // Check for saved sidebar state in SettingsService, default to closed on mobile
+        var savedSidebarState = await SettingsService.GetSettingAsync("sidebarOpen", !_isMobile);
+        _drawerOpen = savedSidebarState;
         
         // Listen for navigation changes to close sidebar on mobile
         NavigationManager.LocationChanged += OnLocationChanged;
@@ -133,8 +127,8 @@
     {
         _drawerOpen = !_drawerOpen;
         
-        // Save the sidebar state to localStorage
-        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "sidebarOpen", _drawerOpen.ToString());
+        // Save the sidebar state to SettingsService
+        await SettingsService.SetSettingAsync("sidebarOpen", _drawerOpen);
         StateHasChanged();
     }
     
@@ -176,7 +170,7 @@
         if (_isMobile && _drawerOpen)
         {
             _drawerOpen = false;
-            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "sidebarOpen", _drawerOpen.ToString());
+            await SettingsService.SetSettingAsync("sidebarOpen", _drawerOpen);
             StateHasChanged();
         }
     }
