@@ -65,7 +65,7 @@
                     value="@message.Text"
                     @oninput="OnInput"
                     @onkeydown="HandleKeyDown"
-                    placeholder="Type your message or paste files..."
+                    placeholder="Type your message, paste files, or drag and drop files to upload..."
                     disabled="@IsLoading"
                     class="hypermodern-textarea"
                     rows="1"
@@ -322,6 +322,13 @@
             
             // Set up paste file upload functionality
             await JSRuntime.InvokeVoidAsync("setupPasteFileUpload", TextareaRef, DotNetObjectReference.Create(this));
+            
+            // Set up drag and drop functionality for the entire input container
+            var inputContainer = await JSRuntime.InvokeAsync<IJSObjectReference>("eval", "document.querySelector('.hypermodern-input-container')");
+            if (inputContainer != null)
+            {
+                await JSRuntime.InvokeVoidAsync("setupDragAndDrop", inputContainer, DotNetObjectReference.Create(this));
+            }
         }
     }
 
@@ -513,6 +520,121 @@
             Snackbar.Add($"Error handling pasted files: {ex.Message}", Severity.Error);
             isUploading = false;
             StateHasChanged();
+        }
+    }
+
+    [JSInvokable]
+    public async Task HandleDroppedFiles(PastedFileData[] fileDataArray)
+    {
+        try
+        {
+            if (fileDataArray == null || fileDataArray.Length == 0)
+            {
+                return;
+            }
+
+            // Check if model supports file uploads
+            if (!SelectedModelSupportsFiles())
+            {
+                Snackbar.Add($"The selected model '{GetSelectedModelName()}' does not support file attachments.", Severity.Error);
+                return;
+            }
+
+            isUploading = true;
+            pendingUploads = fileDataArray.Length;
+            StateHasChanged();
+
+            foreach (var fileData in fileDataArray)
+            {
+                try
+                {
+                    // Check file size (1MB limit)
+                    if (!FileUtility.IsFileSizeValid(fileData.Size, 1024 * 1024))
+                    {
+                        Snackbar.Add($"Dropped file '{fileData.Name}' is too large. Maximum size is 1MB.", Severity.Error);
+                        pendingUploads--;
+                        continue;
+                    }
+
+                    // Generate unique filename if duplicate exists
+                    var existingFileNames = uploadedAttachments.Select(a => a.FileName);
+                    var uniqueFileName = FileUtility.GenerateUniqueFileName(fileData.Name, existingFileNames);
+                    
+                    // Update the file data with unique filename
+                    if (uniqueFileName != fileData.Name)
+                    {
+                        fileData.Name = uniqueFileName;
+                    }
+
+                    // Check if current model supports the file type for images
+                    if (FileUtility.IsImageFile(fileData.Type) && !SelectedModelSupportsImages())
+                    {
+                        Snackbar.Add($"The selected model '{GetSelectedModelName()}' does not support image files. Please select a different model or remove the image.", Severity.Error);
+                        pendingUploads--;
+                        continue;
+                    }
+
+                    // Check if file type is supported
+                    var currentModel = aiModels.FirstOrDefault(m => m.Id == selectedModelId);
+                    if (!FileUtility.IsFileTypeSupported(fileData.Type, currentModel?.SupportedContentTypes))
+                    {
+                        Snackbar.Add($"File type '{fileData.Type}' is not supported by the selected model '{GetSelectedModelName()}'", Severity.Error);
+                        pendingUploads--;
+                        continue;
+                    }
+
+                    // Create a wrapper around the file data
+                    var browserFile = new JSBrowserFile(fileData);
+                    
+                    // Upload the file
+                    var attachment = await AttachmentService.UploadAttachment(browserFile);
+                    if (attachment != null)
+                    {
+                        uploadedAttachments.Add(attachment);
+                        Snackbar.Add($"File '{attachment.FileName}' uploaded successfully", Severity.Success);
+                    }
+
+                    pendingUploads--;
+                    StateHasChanged();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error uploading dropped file '{fileData.Name}': {ex.Message}");
+                    Snackbar.Add($"Error uploading dropped file '{fileData.Name}': {ex.Message}", Severity.Error);
+                    pendingUploads--;
+                }
+            }
+
+            isUploading = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error handling dropped files: {ex.Message}");
+            Snackbar.Add($"Error handling dropped files: {ex.Message}", Severity.Error);
+            isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    [JSInvokable]
+    public void HandleRejectedFiles(RejectedFileInfo[] rejectedFiles)
+    {
+        try
+        {
+            if (rejectedFiles == null || rejectedFiles.Length == 0)
+            {
+                return;
+            }
+
+            foreach (var rejected in rejectedFiles)
+            {
+                Snackbar.Add($"'{rejected.Name}': {rejected.Reason}", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error handling rejected files: {ex.Message}");
         }
     }
 
@@ -711,6 +833,14 @@
     {
         // Clean up paste event handler
         JSRuntime.InvokeVoidAsync("removePasteFileUpload", TextareaRef);
+        
+        // Clean up drag and drop functionality
+        JSRuntime.InvokeVoidAsync("eval", @"
+            const inputContainer = document.querySelector('.hypermodern-input-container');
+            if (inputContainer && window.removeDragAndDrop) {
+                window.removeDragAndDrop(inputContainer);
+            }
+        ");
         
         JSRuntime.InvokeVoidAsync("removeDocumentClickHandler");
         JSRuntime.InvokeVoidAsync("unregisterBlazorComponent", "reasoningMenu");

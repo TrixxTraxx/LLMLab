@@ -12,6 +12,12 @@ public class PastedFileInfo
     public long LastModified { get; set; }
 }
 
+public class RejectedFileInfo
+{
+    public string Name { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
+}
+
 public class PastedFileData
 {
     public string Name { get; set; } = string.Empty;

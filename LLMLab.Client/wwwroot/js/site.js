@@ -282,10 +282,91 @@ window.setupPasteFileUpload = function(textareaElement, dotNetRef) {
                 // Prevent default paste behavior when files are detected
                 event.preventDefault();
                 
-                // Process each file and read its data
-                const fileDataArray = [];
+                // Validate files before processing to prevent page freeze
+                const validFiles = [];
+                const rejectedFiles = [];
+                const maxFileSize = 1024 * 1024; // 1MB limit
                 
                 for (const file of files) {
+                    // Check file size first (before reading file contents)
+                    if (file.size > maxFileSize) {
+                        rejectedFiles.push({
+                            name: file.name || 'pasted-file',
+                            reason: `File too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Maximum size is 1MB.`
+                        });
+                        continue;
+                    }
+                    
+                    // Check if file is empty
+                    if (file.size === 0) {
+                        rejectedFiles.push({
+                            name: file.name || 'pasted-file',
+                            reason: 'File is empty.'
+                        });
+                        continue;
+                    }
+                    
+                    // Basic file type validation - reject suspicious files
+                    if (!file.type && file.name && !file.name.includes('.')) {
+                        rejectedFiles.push({
+                            name: file.name || 'pasted-file',
+                            reason: 'Unknown file type.'
+                        });
+                        continue;
+                    }
+                    
+                    // Enhanced content type validation
+                    const suspiciousTypes = [
+                        'application/x-msdownload',
+                        'application/x-executable',
+                        'application/x-dosexec',
+                        'application/x-winexe',
+                        'application/x-sh',
+                        'application/x-bat',
+                        'application/x-com',
+                        'application/x-msi'
+                    ];
+                    
+                    if (suspiciousTypes.includes(file.type)) {
+                        rejectedFiles.push({
+                            name: file.name || 'pasted-file',
+                            reason: `File type '${file.type}' is not allowed for security reasons.`
+                        });
+                        continue;
+                    }
+                    
+                    // Check for executable file extensions
+                    const fileName = (file.name || '').toLowerCase();
+                    const dangerousExtensions = ['.exe', '.bat', '.cmd', '.com', '.scr', '.msi', '.dll', '.sh', '.ps1', '.vbs', '.js', '.jar'];
+                    const hasDangerousExtension = dangerousExtensions.some(ext => fileName.endsWith(ext));
+                    
+                    if (hasDangerousExtension) {
+                        rejectedFiles.push({
+                            name: file.name || 'pasted-file',
+                            reason: 'Executable files are not allowed for security reasons.'
+                        });
+                        continue;
+                    }
+                    
+                    validFiles.push(file);
+                }
+                
+                // Log rejected files for debugging
+                if (rejectedFiles.length > 0) {
+                    rejectedFiles.forEach(rejected => {
+                        console.warn(`Rejected pasted file: ${rejected.name} - ${rejected.reason}`);
+                    });
+                }
+                
+                if (validFiles.length === 0) {
+                    console.warn('No valid pasted files to upload');
+                    return;
+                }
+                
+                // Process each valid file and read its data
+                const fileDataArray = [];
+                
+                for (const file of validFiles) {
                     try {
                         // Read file as ArrayBuffer
                         const arrayBuffer = await file.arrayBuffer();
@@ -309,6 +390,11 @@ window.setupPasteFileUpload = function(textareaElement, dotNetRef) {
                 if (fileDataArray.length > 0) {
                     // Call the Blazor component method to handle pasted files
                     await dotNetRef.invokeMethodAsync('HandlePastedFiles', fileDataArray);
+                }
+                
+                // Send rejected files information to show user messages
+                if (rejectedFiles.length > 0) {
+                    await dotNetRef.invokeMethodAsync('HandleRejectedFiles', rejectedFiles);
                 }
             }
         } catch (error) {
@@ -625,3 +711,208 @@ window.unregisterResizeHandler = function() {
         mainLayoutResizeHandler = null;
     }
 };
+
+// ==============================================
+// DRAG AND DROP FILE UPLOAD FUNCTIONALITY
+// ==============================================
+
+// Setup drag and drop functionality for file uploads
+window.setupDragAndDrop = function(dropZoneElement, dotNetRef) {
+    if (!dropZoneElement || !dotNetRef) {
+        console.error('Missing dropZoneElement or dotNetRef for drag and drop setup');
+        return;
+    }
+
+    // Remove existing handlers if they exist
+    if (dropZoneElement._dragDropHandlers) {
+        removeDragAndDrop(dropZoneElement);
+    }
+
+    // Create handlers object to store references
+    const handlers = {
+        dragenter: function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZoneElement.classList.add('drag-over');
+        },
+        
+        dragover: function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZoneElement.classList.add('drag-over');
+        },
+        
+        dragleave: function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Only remove drag-over class if we're leaving the drop zone itself, not a child element
+            if (!dropZoneElement.contains(e.relatedTarget)) {
+                dropZoneElement.classList.remove('drag-over');
+            }
+        },
+        
+        drop: async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZoneElement.classList.remove('drag-over');
+            
+            try {
+                const files = Array.from(e.dataTransfer.files);
+                if (files.length === 0) return;
+                
+                // Validate files before processing to prevent page freeze
+                const validFiles = [];
+                const rejectedFiles = [];
+                const maxFileSize = 1024 * 1024; // 1MB limit
+                
+                for (const file of files) {
+                    // Check file size first (before reading file contents)
+                    if (file.size > maxFileSize) {
+                        rejectedFiles.push({
+                            name: file.name,
+                            reason: `File too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Maximum size is 1MB.`
+                        });
+                        continue;
+                    }
+                    
+                    // Check if file is empty
+                    if (file.size === 0) {
+                        rejectedFiles.push({
+                            name: file.name,
+                            reason: 'File is empty.'
+                        });
+                        continue;
+                    }
+                    
+                    // Basic file type validation - reject suspicious files
+                    if (!file.type && !file.name.includes('.')) {
+                        rejectedFiles.push({
+                            name: file.name,
+                            reason: 'Unknown file type.'
+                        });
+                        continue;
+                    }
+                    
+                    // Enhanced content type validation
+                    const suspiciousTypes = [
+                        'application/x-msdownload',
+                        'application/x-executable',
+                        'application/x-dosexec',
+                        'application/x-winexe',
+                        'application/x-sh',
+                        'application/x-bat',
+                        'application/x-com',
+                        'application/x-msi'
+                    ];
+                    
+                    if (suspiciousTypes.includes(file.type)) {
+                        rejectedFiles.push({
+                            name: file.name,
+                            reason: `File type '${file.type}' is not allowed for security reasons.`
+                        });
+                        continue;
+                    }
+                    
+                    // Check for executable file extensions
+                    const fileName = file.name.toLowerCase();
+                    const dangerousExtensions = ['.exe', '.bat', '.cmd', '.com', '.scr', '.msi', '.dll', '.sh', '.ps1', '.vbs', '.js', '.jar'];
+                    const hasDangerousExtension = dangerousExtensions.some(ext => fileName.endsWith(ext));
+                    
+                    if (hasDangerousExtension) {
+                        rejectedFiles.push({
+                            name: file.name,
+                            reason: 'Executable files are not allowed for security reasons.'
+                        });
+                        continue;
+                    }
+                    
+                    validFiles.push(file);
+                }
+                
+                // Log rejected files for debugging
+                if (rejectedFiles.length > 0) {
+                    rejectedFiles.forEach(rejected => {
+                        console.warn(`Rejected file: ${rejected.name} - ${rejected.reason}`);
+                    });
+                }
+                
+                if (validFiles.length === 0) {
+                    console.warn('No valid files to upload');
+                    return;
+                }
+                
+                // Convert valid files to the format expected by Blazor
+                const fileDataArray = [];
+                
+                for (const file of validFiles) {
+                    try {
+                        const arrayBuffer = await file.arrayBuffer();
+                        const base64 = arrayBufferToBase64(arrayBuffer);
+                        
+                        fileDataArray.push({
+                            name: file.name,
+                            type: file.type,
+                            size: file.size,
+                            data: base64
+                        });
+                    } catch (error) {
+                        console.error(`Error reading dropped file ${file.name}:`, error);
+                    }
+                }
+                
+                if (fileDataArray.length > 0) {
+                    // Call the Blazor component method to handle dropped files
+                    await dotNetRef.invokeMethodAsync('HandleDroppedFiles', fileDataArray);
+                }
+                
+                // Send rejected files information to show user messages
+                if (rejectedFiles.length > 0) {
+                    await dotNetRef.invokeMethodAsync('HandleRejectedFiles', rejectedFiles);
+                }
+            } catch (error) {
+                console.error('Error handling drop event:', error);
+            }
+        }
+    };
+
+    // Store handlers reference for cleanup
+    dropZoneElement._dragDropHandlers = handlers;
+    dropZoneElement._dragDropDotNetRef = dotNetRef;
+
+    // Add event listeners
+    dropZoneElement.addEventListener('dragenter', handlers.dragenter);
+    dropZoneElement.addEventListener('dragover', handlers.dragover);
+    dropZoneElement.addEventListener('dragleave', handlers.dragleave);
+    dropZoneElement.addEventListener('drop', handlers.drop);
+};
+
+// Remove drag and drop functionality
+window.removeDragAndDrop = function(dropZoneElement) {
+    if (!dropZoneElement || !dropZoneElement._dragDropHandlers) return;
+    
+    const handlers = dropZoneElement._dragDropHandlers;
+    
+    // Remove event listeners
+    dropZoneElement.removeEventListener('dragenter', handlers.dragenter);
+    dropZoneElement.removeEventListener('dragover', handlers.dragover);
+    dropZoneElement.removeEventListener('dragleave', handlers.dragleave);
+    dropZoneElement.removeEventListener('drop', handlers.drop);
+    
+    // Clean up references
+    delete dropZoneElement._dragDropHandlers;
+    delete dropZoneElement._dragDropDotNetRef;
+    
+    // Remove any remaining drag classes
+    dropZoneElement.classList.remove('drag-over');
+};
+
+// Helper function to convert ArrayBuffer to Base64
+function arrayBufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+}
