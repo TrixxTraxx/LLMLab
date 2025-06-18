@@ -189,11 +189,17 @@
                                 d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
                         </svg>
                     </button>
-                    <button class="action-button" @onclick="() => BranchFromMessage()"
-                            title="Create branch from this message">
+                    <button class="action-button" @onclick="OnBranchClicked" title="Create branch from this message">
+                        @if (isBranching)
+                        {
+                            <span class="branch-loading-dots"> <span>.</span><span>.</span><span>.</span> </span>
+                        }
+                        else
+                        {
                         <svg viewBox="131 -131 512 512" fill="currentColor">
                             <path d="M569.9,15.3c0-40.9-32.2-73.1-73.1-73.1s-73.1,32.2-73.1,73.1c0,26.7,14.9,50.3,36.2,62.9v11   c-0.8,18.9-8.7,35.4-22.8,50.3c-14.9,14.9-31.5,22-50.3,22.8c-30.7,0.8-54.3,5.5-73.1,16.5V5.1c21.2-12.6,36.2-35.4,36.2-62.9   c0-40.9-32.2-73.1-73.1-73.1s-72.7,32.1-72.7,73c0,26.7,14.9,50.3,36.2,62.9v239.9c-21.2,12.6-36.2,36.2-36.2,62.9   c0,40.9,32.2,73.1,73.1,73.1s73.1-32.2,73.1-73.1c0-19.7-7.1-36.2-19.7-49.5c3.1-2.4,17.3-14.9,21.2-17.3   c9.4-3.9,20.4-6.3,34.6-6.3c38.5-1.6,71.6-16.5,100.7-45.6c29.1-29.1,44-72.4,45.6-110.1h-0.8C554.9,64.8,569.9,42,569.9,15.3z    M278.1-101.9c24.4,0,44,20.4,44,44s-20.4,44-44,44s-44-20.4-44-44S254.5-101.9,278.1-101.9z M278.1,351.1c-24.4,0-44-20.4-44-44   s20.4-44,44-44s44,20.4,44,44C321.3,331.5,301.7,351.1,278.1,351.1z M496.7,59.3c-24.4,0-44-20.4-44-44s20.4-44,44-44   c23.6,0,44,20.4,44,44C540.8,38.9,520.3,59.3,496.7,59.3z"/>
                         </svg>
+                        }
                     </button>
                 }
             </div>
@@ -225,6 +231,8 @@
 
     private bool isHubConnected = false;
     private List<AiModelDto> aiModels = new List<AiModelDto>();
+
+    private bool isBranching = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -449,6 +457,15 @@
         isEditing = false;
         StateHasChanged();
         await Task.CompletedTask;
+    }
+
+    private async Task OnBranchClicked()
+    {
+        isBranching = true;
+        StateHasChanged();
+        await BranchFromMessage();
+        isBranching = false;
+        StateHasChanged();
     }
 
     public async ValueTask DisposeAsync()
