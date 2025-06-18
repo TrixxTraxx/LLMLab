@@ -5,6 +5,7 @@
     height: 100vh;
     background: var(--mud-palette-drawer-background);
     position: relative;
+    overflow: visible;
 }
 
 ::deep .drawer-custom::before {
@@ -20,6 +21,179 @@
         color-mix(in srgb, var(--mud-palette-primary) 1%, transparent) 100%);
     pointer-events: none;
 }
+
+/* Floating Sidebar Toggle Button Styles */
+.sidebar-toggle-container {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-toggle-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-surface) 95%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-surface) 85%, transparent) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid color-mix(in srgb, var(--mud-palette-primary) 20%, transparent);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.15),
+        0 4px 12px color-mix(in srgb, var(--mud-palette-primary) 15%, transparent),
+        inset 0 1px 0 color-mix(in srgb, var(--mud-palette-surface) 40%, transparent);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: slideInLeft 0.3s ease-out;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.sidebar-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-primary) 8%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-primary) 4%, transparent) 100%);
+    border: 2px solid color-mix(in srgb, var(--mud-palette-primary) 15%, transparent);
+    border-radius: 10px;
+    color: var(--mud-palette-text-primary);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    outline: none;
+}
+
+.sidebar-toggle-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-primary) 15%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-primary) 8%, transparent) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-toggle-btn:hover::before {
+    opacity: 1;
+}
+
+.sidebar-toggle-btn:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--mud-palette-primary) 30%, transparent);
+    color: var(--mud-palette-primary);
+    box-shadow: 
+        0 6px 16px color-mix(in srgb, var(--mud-palette-primary) 20%, transparent),
+        0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.sidebar-toggle-btn:active {
+    transform: translateY(-1px);
+}
+
+/* Specific button styling */
+.new-chat-action:hover {
+    color: #22c55e;
+    border-color: color-mix(in srgb, #22c55e 30%, transparent);
+    box-shadow: 
+        0 6px 16px color-mix(in srgb, #22c55e 20%, transparent),
+        0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.new-chat-action:hover::before {
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, #22c55e 15%, transparent) 0%,
+        color-mix(in srgb, #22c55e 8%, transparent) 100%);
+}
+
+.search-action:hover {
+    color: #3b82f6;
+    border-color: color-mix(in srgb, #3b82f6 30%, transparent);
+    box-shadow: 
+        0 6px 16px color-mix(in srgb, #3b82f6 20%, transparent),
+        0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.search-action:hover::before {
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, #3b82f6 15%, transparent) 0%,
+        color-mix(in srgb, #3b82f6 8%, transparent) 100%);
+}
+
+.open-sidebar-action:hover {
+    color: var(--mud-palette-primary);
+    border-color: color-mix(in srgb, var(--mud-palette-primary) 30%, transparent);
+    box-shadow: 
+        0 6px 16px color-mix(in srgb, var(--mud-palette-primary) 20%, transparent),
+        0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.action-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.sidebar-toggle-btn:hover .action-icon {
+    transform: scale(1.1);
+}
+
+/* Close Sidebar Button Styles */
+/* Old close button styles removed - now using sidebar arrow instead */
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .sidebar-toggle-container {
+        top: 15px;
+        left: 15px;
+    }
+    
+    .sidebar-toggle-menu {
+        padding: 6px;
+        gap: 4px;
+    }
+    
+    .sidebar-toggle-btn {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .action-icon {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+/* Remove the old action-text and responsive overrides since we're now icon-only */
 
 .sidebar-region{
     display: flex;
@@ -184,4 +358,71 @@
 
 .header-logo{
     filter: var(--logo-color-filter);
+}
+
+/* Sidebar Hide Arrow - positioned on right edge of sidebar */
+.sidebar-hide-arrow {
+    position: absolute;
+    top: 135px;
+    right: -15px;
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-surface) 95%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-surface) 85%, transparent) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid color-mix(in srgb, var(--mud-palette-primary) 20%, transparent);
+    border-radius: 50%;
+    color: var(--mud-palette-text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 999;
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        0 2px 8px color-mix(in srgb, var(--mud-palette-primary) 10%, transparent),
+        inset 0 1px 0 color-mix(in srgb, var(--mud-palette-surface) 40%, transparent);
+    outline: none;
+}
+
+.sidebar-hide-arrow:hover {
+    transform: scale(1.1);
+    border-color: color-mix(in srgb, var(--mud-palette-primary) 30%, transparent);
+    color: var(--mud-palette-primary);
+    box-shadow: 
+        0 6px 20px rgba(0, 0, 0, 0.15),
+        0 4px 12px color-mix(in srgb, var(--mud-palette-primary) 20%, transparent),
+        inset 0 1px 0 color-mix(in srgb, var(--mud-palette-surface) 40%, transparent);
+}
+
+.sidebar-hide-arrow:active {
+    transform: scale(1.05);
+}
+
+.arrow-icon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-hide-arrow:hover .arrow-icon {
+    transform: translateX(-2px);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .sidebar-hide-arrow {
+        top: 135px;
+        right: -12px;
+        width: 28px;
+        height: 28px;
+    }
+    
+    .arrow-icon {
+        width: 14px;
+        height: 14px;
+    }
 }

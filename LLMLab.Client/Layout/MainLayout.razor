@@ -2,8 +2,10 @@
 @using LLMLab.Client.Services
 @using LLMLab.Client.Components.Common
 @inherits LayoutComponentBase
+@implements IDisposable
 @inject ClientAuthenticationService ClientAuthenticationService
 @inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
 
 <MyMudThemeProvider />
 <MudPopoverProvider />
@@ -28,25 +30,67 @@
             </div>
 
             <div class="history-region">
-                <ChatHistory/>
+                <ChatHistory @ref="chatHistory"/>
             </div>
 
             <div class="login-section">
                 <LoginDisplay/>
             </div>
+            
+            <!-- Sidebar Hide Arrow - positioned on right edge of sidebar -->
+            @if (_drawerOpen)
+            {
+                <button class="sidebar-hide-arrow" @onclick="ToggleSidebar" title="Hide Sidebar">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="arrow-icon">
+                        <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                    </svg>
+                </button>
+            }
         </MudDrawer>
+        
+        <!-- Floating Sidebar Toggle Button -->
+        @if (!_drawerOpen)
+        {
+            <div class="sidebar-toggle-container">
+                <div class="sidebar-toggle-menu">
+                    <button class="sidebar-toggle-btn new-chat-action" @onclick="StartNewChat" title="New Chat (Ctrl/Cmd+B)">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="action-icon">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                    </button>
+                    
+                    <button class="sidebar-toggle-btn search-action" @onclick="StartSearch" title="Search Chats (Ctrl/Cmd+K)">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="action-icon">
+                            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                        </svg>
+                    </button>
+                    
+                    <button class="sidebar-toggle-btn open-sidebar-action" @onclick="ToggleSidebar" title="Open Sidebar">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="action-icon">
+                            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        }
+        
         <MudMainContent Class="pt-0 px-0">
             <MudContainer MaxWidth="MaxWidth.Medium">
                 @Body
             </MudContainer>
         </MudMainContent>
     </MudLayout>
+    
+    <!-- Search Modal for when sidebar is closed -->
+    <SearchModal IsVisible="isSearchModalVisible" OnClose="CloseSearchModal" />
 </CascadingValue>
 </CascadingValue>
 
 @code {
     private bool _drawerOpen = true;
     private bool _isMobile = false;
+    private bool isSearchModalVisible = false;
+    private ChatHistory? chatHistory;
 
     private UserDto? User;
 
@@ -54,7 +98,23 @@
     {
         User = await ClientAuthenticationService.GetCurrentUser();
         _isMobile = await IsMobileDevice();
-        _drawerOpen = !_isMobile; // Open drawer on desktop, closed on mobile
+        
+        // Check for saved sidebar state in localStorage, default to closed on mobile
+        var savedSidebarState = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", "sidebarOpen");
+        if (!string.IsNullOrEmpty(savedSidebarState) && bool.TryParse(savedSidebarState, out bool savedState))
+        {
+            _drawerOpen = savedState;
+        }
+        else
+        {
+            _drawerOpen = !_isMobile; // Default: open on desktop, closed on mobile
+        }
+        
+        // Listen for navigation changes to close sidebar on mobile
+        NavigationManager.LocationChanged += OnLocationChanged;
+        
+        // Listen for window resize events
+        await JSRuntime.InvokeVoidAsync("registerResizeHandler", DotNetObjectReference.Create(this));
     }
 
     private async Task<bool> IsMobileDevice()
@@ -67,5 +127,92 @@
     {
         User = updatedUser;
         StateHasChanged();
+    }
+    
+    private async Task ToggleSidebar()
+    {
+        _drawerOpen = !_drawerOpen;
+        
+        // Save the sidebar state to localStorage
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "sidebarOpen", _drawerOpen.ToString());
+        StateHasChanged();
+    }
+    
+    private async Task StartNewChat()
+    {
+        chatHistory?.NewChatShortcut();
+        
+        // Close sidebar on mobile after starting new chat
+        await CloseSidebarOnMobile();
+    }
+    
+    private async Task StartSearch()
+    {
+        if (_drawerOpen && chatHistory != null)
+        {
+            // If sidebar is open, use the ChatHistory search
+            chatHistory.OpenSearchShortcut();
+            
+            // Close sidebar on mobile after opening search
+            await CloseSidebarOnMobile();
+        }
+        else
+        {
+            // If sidebar is closed, use our local search modal
+            isSearchModalVisible = true;
+            StateHasChanged();
+        }
+    }
+    
+    private void CloseSearchModal()
+    {
+        isSearchModalVisible = false;
+        StateHasChanged();
+    }
+    
+    private async Task CloseSidebarOnMobile()
+    {
+        // Check if we're on mobile and sidebar is open in overlay mode
+        if (_isMobile && _drawerOpen)
+        {
+            _drawerOpen = false;
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "sidebarOpen", _drawerOpen.ToString());
+            StateHasChanged();
+        }
+    }
+    
+    private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        // Close sidebar on mobile when navigating (e.g., thread selection, profile)
+        await CloseSidebarOnMobile();
+    }
+    
+    [JSInvokable]
+    public async Task OnWindowResized(int width)
+    {
+        bool wasMobile = _isMobile;
+        _isMobile = width < 768;
+        
+        // If transitioning from mobile to desktop, don't automatically open sidebar
+        // Only update mobile state, preserve user's sidebar preference
+        if (wasMobile != _isMobile)
+        {
+            StateHasChanged();
+        }
+    }
+    
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+        
+        // Clean up resize handler
+        try
+        {
+            JSRuntime.InvokeVoidAsync("unregisterResizeHandler");
+        }
+        catch
+        {
+            // Ignore cleanup errors during disposal
+        }
     }
 }

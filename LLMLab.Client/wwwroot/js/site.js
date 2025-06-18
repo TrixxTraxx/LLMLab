@@ -494,3 +494,29 @@ window.isMacPlatform = function() {
     return navigator.userAgent.indexOf('Mac') !== -1 || 
            (navigator.platform && navigator.platform.indexOf('Mac') !== -1);
 };
+
+// Window resize handler for MainLayout
+let mainLayoutResizeHandler = null;
+
+window.registerResizeHandler = function(dotNetObjectReference) {
+    // Clean up existing handler if any
+    if (mainLayoutResizeHandler) {
+        window.removeEventListener('resize', mainLayoutResizeHandler);
+    }
+    
+    // Create new handler
+    mainLayoutResizeHandler = function() {
+        const width = window.innerWidth;
+        dotNetObjectReference.invokeMethodAsync('OnWindowResized', width);
+    };
+    
+    // Register the handler
+    window.addEventListener('resize', mainLayoutResizeHandler);
+};
+
+window.unregisterResizeHandler = function() {
+    if (mainLayoutResizeHandler) {
+        window.removeEventListener('resize', mainLayoutResizeHandler);
+        mainLayoutResizeHandler = null;
+    }
+};

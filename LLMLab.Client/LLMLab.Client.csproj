@@ -9,8 +9,8 @@
         <PublishTrimmed>true</PublishTrimmed>
         <RunAOTCompilation>true</RunAOTCompilation>
         <BlazorEnableCompression>true</BlazorEnableCompression>
-        <!--<DebugType>none</DebugType>
-        <DebugSymbols>false</DebugSymbols>-->
+        <DebugType>none</DebugType>
+        <DebugSymbols>false</DebugSymbols>
         <WasmStripILAfterAOT>true</WasmStripILAfterAOT>
         <WasmEnableSIMD>true</WasmEnableSIMD>
         <RootNamespace>LLMLab.Client</RootNamespace>

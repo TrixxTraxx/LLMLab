@@ -456,3 +456,7 @@ html, body {
 .markdown-content{
     margin-left: 8px;
 }
+
+.mud-drawer{
+    overflow: visible !important;
+}
