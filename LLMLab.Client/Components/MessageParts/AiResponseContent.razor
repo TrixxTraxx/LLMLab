@@ -9,7 +9,6 @@
         <ThinkingTextPart
             @ref="thinkingText"
             Message="@Message"
-            IsThinkingCollapsed="@(!string.IsNullOrWhiteSpace(Message.Message.ModelResponse))"
         />
     }
 
@@ -72,14 +71,13 @@
     private bool receivedFirstToken = false;
     
     private MessageFormatter MessageFormatter = new MessageFormatter();
+    private bool isThinkingCollapsed;
 
     protected override void OnInitialized()
     {
         Message.OnGenerate += OnTokenReceived;
         Message.OnReasoningGenerate += OnReasoningTokenReceived;
         MessageFormatter.InitializeSegments(Message.Message.ModelResponse);
-        //Console.WriteLine("Initialized MessageFormatter with segments: " + MessageFormatter.Segments.Count + " segments for response: " + Message.Message.ModelResponse);
-        //Console.WriteLine("Message Segments: " + string.Join(", ", MessageFormatter.Segments.Select(s => $"{s.Type} ({s.Content})")));
     }
 
     private void OnTokenReceived(string token)
