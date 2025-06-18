@@ -56,6 +56,7 @@ builder.Services.AddScoped<AiModelService>();
 builder.Services.AddScoped<AiKeyService>();
 builder.Services.AddScoped<AiGenerationService>();
 builder.Services.AddScoped<ChatSharingService>();
+builder.Services.AddScoped<SystemPromptService>();
 
 builder.Services.AddScoped<ChatModelProvider>();
 builder.Services.AddScoped<OpenAiChat>();

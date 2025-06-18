@@ -20,6 +20,7 @@ public class GenerateMessageJob(
         {
             message = await dbContext.Messages
                 .Include(x => x.Thread)
+                .ThenInclude(x => x.User)
                 .Include(x => x.Attachments)
                 .Include(x => x.Model)
                 .FirstOrDefaultAsync(x => x.Id == messageId);

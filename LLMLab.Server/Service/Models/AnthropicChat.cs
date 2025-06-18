@@ -9,7 +9,8 @@ namespace LLMLab.Server.Service.Models;
 public class AnthropicChat(
     ApplicationDbContext dbContext,
     AttachmentService attachmentService,
-    AiKeyService keyService
+    AiKeyService keyService,
+    SystemPromptService systemPromptService
 ) : IChatModel
 {
     public async Task<ChatModelResponse> GenerateResponse(Message entity, List<Message> messagesChain, AiModel config,
@@ -83,6 +84,10 @@ public class AnthropicChat(
             var parameters = new MessageParameters()
             {
                 Messages = messages,
+                System = new List<SystemMessage>()
+                {
+                    new(systemPromptService.GetSystemprompt(config, entity.Thread.User))
+                },
                 MaxTokens = config.MaxOutputTokens > 0 ? config.MaxOutputTokens : 8000,
                 Model = config.ModelId, // Should be claude-3-7-sonnet-20250101 or similar for thinking
                 Stream = true,

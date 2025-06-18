@@ -22,4 +22,5 @@ public class Appsettings
     
     
     public string EncryptionKey { get; set; } = string.Empty;
+    public string SystemPromptTemplate { get; set; }
 }

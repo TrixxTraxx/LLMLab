@@ -18,7 +18,6 @@ public class AiModel
     public bool HasThinkingSupport { get; set; } = false;
     public bool RequireThinking { get; set; } = false;
 
-    public string SystemPrompt { get; set; } = string.Empty;
     public string ModelId { get; set; } = string.Empty;
     public string Provider { get; set; } = string.Empty;
     public string? ApiUrl { get; set; } = null;

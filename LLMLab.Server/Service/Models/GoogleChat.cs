@@ -8,7 +8,8 @@ namespace LLMLab.Server.Service.Models;
 public class GoogleChat(
     ApplicationDbContext dbContext,
     AttachmentService attachmentService,
-    AiKeyService keyService
+    AiKeyService keyService,
+    SystemPromptService systemPromptService
 ) : IChatModel
 {
     public async Task<ChatModelResponse> GenerateResponse(DataMessage entity, List<DataMessage> messagesChain, AiModel config,
@@ -41,13 +42,10 @@ public class GoogleChat(
             List<IPart> parts = new();
             
             // Add system prompt if available
-            if (!string.IsNullOrEmpty(config.SystemPrompt))
+            parts.Add(new TextData()
             {
-                parts.Add(new TextData()
-                {
-                    Text = "System Prompt:" + config.SystemPrompt
-                });
-            }
+                Text = "System Prompt: ```" + systemPromptService.GetSystemprompt(config, entity.Thread.User) + "```"
+            });
 
             // Process message chain (reverse to maintain conversation order)
             messagesChain.Reverse();

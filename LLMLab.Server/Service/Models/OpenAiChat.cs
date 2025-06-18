@@ -8,7 +8,8 @@ namespace LLMLab.Server.Service.Models;
 public class OpenAiChat(
     ApplicationDbContext dbContext,
     AttachmentService attachmentService,
-    AiKeyService keyService
+    AiKeyService keyService,
+    SystemPromptService systemPromptService
 ) : IChatModel
 {
     public async Task<ChatModelResponse> GenerateResponse(Message entity, List<Message> messagesChain, AiModel config,
@@ -25,10 +26,7 @@ public class OpenAiChat(
 
             //create the chat messages
             List<ChatMessage> messages = new();
-            if (!string.IsNullOrEmpty(config.SystemPrompt))
-            {
-                messages.Add(new SystemChatMessage(config.SystemPrompt));
-            }
+            messages.Add(new SystemChatMessage(systemPromptService.GetSystemprompt(config, entity.Thread.User)));
 
             //Reverse the messages chain to maintain the order of conversation
             messagesChain.Reverse();

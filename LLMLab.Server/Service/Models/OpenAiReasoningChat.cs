@@ -9,7 +9,8 @@ namespace LLMLab.Server.Service.Models;
 public class OpenAiReasoningChat(
     ApplicationDbContext dbContext,
     AttachmentService attachmentService,
-    AiKeyService keyService
+    AiKeyService keyService,
+    SystemPromptService systemPromptService
 ) : IChatModel
 {
         public async Task<ChatModelResponse> GenerateResponse(Message entity, List<Message> messagesChain, AiModel config,
@@ -19,7 +20,7 @@ public class OpenAiReasoningChat(
         {
             if (entity.ReasoningEffortLevel == ReasoningEffortLevel.None)
             {
-                return await new OpenAiChat(dbContext, attachmentService, keyService)
+                return await new OpenAiChat(dbContext, attachmentService, keyService, systemPromptService)
                     .GenerateResponse(entity, messagesChain, config, tokenCallback, thinkingTokenCallback,
                         errorCallback);
             }
@@ -34,10 +35,7 @@ public class OpenAiReasoningChat(
 
             //create the chat messages
             List<ResponseItem> messages = new();
-            if (!string.IsNullOrEmpty(config.SystemPrompt))
-            {
-                messages.Add(ResponseItem.CreateSystemMessageItem(config.SystemPrompt));
-            }
+            messages.Add(ResponseItem.CreateSystemMessageItem(systemPromptService.GetSystemprompt(config, entity.Thread.User)));
 
             //Reverse the messages chain to maintain the order of conversation
             messagesChain.Reverse();

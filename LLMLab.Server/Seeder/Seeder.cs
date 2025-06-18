@@ -94,7 +94,6 @@ public class Seeder
                 existingModel.HasThinkingSupport = model.HasThinkingSupport;
                 existingModel.RequireThinking = model.RequireThinking;
                 
-                existingModel.SystemPrompt = model.SystemPrompt;
                 existingModel.Provider = model.Provider;
                 existingModel.ApiUrl = model.ApiUrl;
                 existingModel.ApiKey = model.ApiKey;
