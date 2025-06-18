@@ -461,6 +461,7 @@
 
     private async Task OnBranchClicked()
     {
+        if (isBranching || ReadOnly) return;
         isBranching = true;
         StateHasChanged();
         await BranchFromMessage();
