@@ -1,24 +1,8 @@
-.message-editor-wrapper {
-    width: 100%;
-    padding: 16px;
-    background: linear-gradient(135deg, 
-        color-mix(in srgb, var(--mud-palette-surface) 95%, transparent) 0%,
-        color-mix(in srgb, var(--mud-palette-surface) 75%, transparent) 100%);
-    border: 2px solid color-mix(in srgb, var(--mud-palette-warning) 30%, transparent);
-    border-radius: 16px;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    margin: 8px 0;
-    box-shadow: 
-        0 4px 12px rgba(0, 0, 0, 0.08),
-        0 2px 8px color-mix(in srgb, var(--mud-palette-warning) 15%, transparent);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 .message-editor-container {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    margin: 8px 0;
 }
 
 /* Attachments Section */
@@ -192,14 +176,14 @@
 
 .message-editor-textarea {
     width: 100%;
-    min-height: 80px;
-    max-height: 300px;
-    padding: 16px 20px;
-    border: 2px solid color-mix(in srgb, var(--mud-palette-surface) 60%, transparent);
+    min-height: 140px;
+    max-height: 400px;
+    padding: 20px 60px 20px 20px;
+    border: 2px solid color-mix(in srgb, var(--mud-palette-primary) 40%, transparent);
     border-radius: 16px;
     background: linear-gradient(135deg, 
         color-mix(in srgb, var(--mud-palette-surface) 100%, white) 0%,
-        color-mix(in srgb, var(--mud-palette-surface) 90%, white) 100%);
+        color-mix(in srgb, var(--mud-palette-surface) 95%, white) 100%);
     color: var(--mud-palette-text-primary);
     font-size: 15px;
     font-weight: 400;
@@ -210,16 +194,21 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     font-family: inherit;
+    box-shadow: 
+        0 0 0 0 color-mix(in srgb, var(--mud-palette-primary) 15%, transparent),
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        0 2px 8px color-mix(in srgb, var(--mud-palette-primary) 10%, transparent);
 }
 
 .message-editor-textarea:focus {
-    border-color: var(--mud-palette-primary);
+    border-color: color-mix(in srgb, var(--mud-palette-primary) 60%, transparent);
     box-shadow: 
         0 0 0 4px color-mix(in srgb, var(--mud-palette-primary) 15%, transparent),
-        0 4px 12px rgba(0, 0, 0, 0.08);
+        0 6px 16px rgba(0, 0, 0, 0.12),
+        0 3px 12px color-mix(in srgb, var(--mud-palette-primary) 20%, transparent);
     background: linear-gradient(135deg, 
         color-mix(in srgb, var(--mud-palette-surface) 100%, white) 0%,
-        color-mix(in srgb, var(--mud-palette-surface) 95%, white) 100%);
+        color-mix(in srgb, var(--mud-palette-surface) 98%, white) 100%);
 }
 
 .message-editor-textarea:disabled {
@@ -388,8 +377,7 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .message-editor-wrapper {
-        padding: 12px;
+    .message-editor-container {
         margin: 6px 0;
     }
     
@@ -562,10 +550,10 @@
         color-mix(in srgb, var(--mud-palette-primary) 8%, transparent) 0%,
         color-mix(in srgb, var(--mud-palette-primary) 4%, transparent) 100%);
     border: 1px solid color-mix(in srgb, var(--mud-palette-primary) 20%, transparent);
-    border-radius: 8px;
+    border-radius: 12px;
     font-size: 13px;
     color: var(--mud-palette-primary);
-    margin-top: 12px;
+    margin-bottom: 8px;
 }
 
 .upload-status .upload-spinner {
@@ -592,12 +580,12 @@
     width: 100%;
     min-height: 140px;
     max-height: 400px;
-    padding: 16px 60px 16px 20px;
-    border: 2px solid color-mix(in srgb, var(--mud-palette-surface) 60%, transparent);
+    padding: 20px 60px 20px 20px;
+    border: 2px solid color-mix(in srgb, var(--mud-palette-primary) 40%, transparent);
     border-radius: 16px;
     background: linear-gradient(135deg, 
         color-mix(in srgb, var(--mud-palette-surface) 100%, white) 0%,
-        color-mix(in srgb, var(--mud-palette-surface) 90%, white) 100%);
+        color-mix(in srgb, var(--mud-palette-surface) 95%, white) 100%);
     color: var(--mud-palette-text-primary);
     font-size: 15px;
     font-weight: 400;
@@ -608,16 +596,21 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     font-family: inherit;
+    box-shadow: 
+        0 0 0 0 color-mix(in srgb, var(--mud-palette-primary) 15%, transparent),
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        0 2px 8px color-mix(in srgb, var(--mud-palette-primary) 10%, transparent);
 }
 
 .message-editor-textarea:focus {
-    border-color: var(--mud-palette-primary);
+    border-color: color-mix(in srgb, var(--mud-palette-primary) 60%, transparent);
     box-shadow: 
         0 0 0 4px color-mix(in srgb, var(--mud-palette-primary) 15%, transparent),
-        0 4px 12px rgba(0, 0, 0, 0.08);
+        0 6px 16px rgba(0, 0, 0, 0.12),
+        0 3px 12px color-mix(in srgb, var(--mud-palette-primary) 20%, transparent);
     background: linear-gradient(135deg, 
         color-mix(in srgb, var(--mud-palette-surface) 100%, white) 0%,
-        color-mix(in srgb, var(--mud-palette-surface) 95%, white) 100%);
+        color-mix(in srgb, var(--mud-palette-surface) 98%, white) 100%);
 }
 
 .message-editor-textarea:disabled {
@@ -633,21 +626,21 @@
 /* Action Buttons */
 .editor-actions {
     position: absolute;
-    right: 8px;
-    bottom: 8px;
+    right: 10px;
+    bottom: 10px;
     display: flex;
-    gap: 4px;
+    gap: 6px;
     align-items: center;
 }
 
 .icon-btn {
-    width: 32px;
-    height: 32px;
-    border: 1px solid color-mix(in srgb, var(--mud-palette-surface) 60%, transparent);
-    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    border: 1px solid color-mix(in srgb, var(--mud-palette-surface) 70%, transparent);
+    border-radius: 10px;
     background: linear-gradient(135deg, 
-        color-mix(in srgb, var(--mud-palette-surface) 90%, white) 0%,
-        color-mix(in srgb, var(--mud-palette-surface) 70%, white) 100%);
+        color-mix(in srgb, var(--mud-palette-surface) 95%, white) 0%,
+        color-mix(in srgb, var(--mud-palette-surface) 85%, white) 100%);
     color: var(--mud-palette-text-primary);
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -657,11 +650,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .icon-btn:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .icon-btn:disabled {
@@ -677,25 +671,25 @@
 
 /* Send Button */
 .send-btn {
-    border-color: color-mix(in srgb, var(--mud-palette-success) 20%, transparent);
+    border-color: color-mix(in srgb, var(--mud-palette-success) 25%, transparent);
     background: linear-gradient(135deg, 
-        color-mix(in srgb, var(--mud-palette-success) 8%, transparent) 0%,
-        color-mix(in srgb, var(--mud-palette-success) 4%, transparent) 100%);
+        color-mix(in srgb, var(--mud-palette-success) 10%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-success) 6%, transparent) 100%);
     color: var(--mud-palette-success);
 }
 
 .send-btn:hover:not(:disabled) {
-    border-color: color-mix(in srgb, var(--mud-palette-success) 30%, transparent);
-    background: linear-gradient(135deg, 
-        color-mix(in srgb, var(--mud-palette-success) 12%, transparent) 0%,
-        color-mix(in srgb, var(--mud-palette-success) 6%, transparent) 100%);
-}
-
-.send-btn.enabled {
-    border-color: color-mix(in srgb, var(--mud-palette-success) 40%, transparent);
+    border-color: color-mix(in srgb, var(--mud-palette-success) 35%, transparent);
     background: linear-gradient(135deg, 
         color-mix(in srgb, var(--mud-palette-success) 15%, transparent) 0%,
         color-mix(in srgb, var(--mud-palette-success) 8%, transparent) 100%);
+}
+
+.send-btn.enabled {
+    border-color: color-mix(in srgb, var(--mud-palette-success) 50%, transparent);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-success) 20%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-success) 12%, transparent) 100%);
     color: var(--mud-palette-success);
     font-weight: 600;
 } 
