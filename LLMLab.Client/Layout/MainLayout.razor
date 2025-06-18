@@ -11,6 +11,7 @@
 <MudDialogProvider />
 
 <CascadingValue Value="@User" Name="User">
+<CascadingValue Value="@UpdateUser" Name="UpdateUser">
     <MudLayout>
         <MudDrawer
             @bind-Open="@_drawerOpen"
@@ -40,6 +41,7 @@
         </MudMainContent>
     </MudLayout>
 </CascadingValue>
+</CascadingValue>
 
 @code {
     private bool _drawerOpen = true;
@@ -60,4 +62,9 @@
         return width < 768;
     }
 
+    private void UpdateUser(UserDto updatedUser)
+    {
+        User = updatedUser;
+        StateHasChanged();
+    }
 }

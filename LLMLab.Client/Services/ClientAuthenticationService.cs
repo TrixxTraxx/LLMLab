@@ -45,6 +45,27 @@ public class ClientAuthenticationService
         }
     }
 
+    public async Task<UserDto?> UpdateUserAsync(UpdateUserDto updateUserDto)
+    {
+        try
+        {
+            var response = await _httpClient.PutAsJsonAsync("api/authentication/user", updateUserDto);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var updatedUser = await response.Content.ReadFromJsonAsync<UserDto>();
+            return updatedUser;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating user: {ex.Message}");
+            return null;
+        }
+    }
+
     private async Task UserIsLoggedOut(bool forceLogin)
     {
         var keys = await _storageService.GetKeysAsync();

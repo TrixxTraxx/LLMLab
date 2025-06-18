@@ -1,67 +1,512 @@
 @using LLMLab.Client.Services
+@using LLMLab.Dtos.User
 @inject NavigationManager Navigation
 @inject AppsettingsService AppsettingsService
+@inject ClientAuthenticationService ClientAuthenticationService
 @inject ISnackbar Snackbar
 
 <MudText Typo="Typo.h6" GutterBottom="true">Profile Management</MudText>
 <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-    Manage your account settings and profile information
+    Manage your account settings, system prompts, and profile information
 </MudText>
 
-<div class="profile-section">
-    @if (User != null)
-    {
-        <div class="profile-avatar-section">
-            <MudAvatar Size="Size.Large" Color="Color.Primary">
-                @if (!string.IsNullOrEmpty(User.ProfilePictureUrl))
-                {
-                    <MudImage Src="@GetProfilePictureUrl(User)" Alt="Profile Avatar" />
-                }
-                else
-                {
-                    <MudIcon Icon="@Icons.Material.Filled.Person" />
-                }
-            </MudAvatar>
-            
-            <div class="profile-info">
-                <MudText Typo="Typo.h5">@User.DisplayName</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Secondary">@User.Email</MudText>
-            </div>
-        </div>
+@if (User != null)
+{
+    <div class="profile-management-container">
         
-        <MudDivider Class="my-4" />
-        
-        <div class="d-flex flex-column gap-3">
-            <MudButton 
-                Variant="Variant.Filled" 
-                Color="Color.Primary" 
-                StartIcon="@Icons.Material.Filled.ManageAccounts"
-                OnClick="NavigateToManageProfile"
-                FullWidth="true">
-                Manage Profile
-            </MudButton>
-            
-            <MudButton 
-                Variant="Variant.Outlined" 
-                Color="Color.Error" 
-                StartIcon="@Icons.Material.Filled.Logout"
-                OnClick="LogoutUser"
-                FullWidth="true">
-                Logout
-            </MudButton>
-        </div>
-    }
-    else
-    {
-        <div class="d-flex flex-column align-center gap-3">
-            <MudProgressCircular Indeterminate="true" />
-            <MudText Typo="Typo.body2" Color="Color.Secondary">Loading profile...</MudText>
-        </div>
-    }
-</div>
+        <!-- Profile Information Card -->
+        <MudCard Class="profile-info-card mb-4" Elevation="3">
+            <MudCardContent>
+                <div class="profile-header">
+                    @if (!string.IsNullOrEmpty(User.ProfilePictureUrl))
+                    {
+                        <div class="profile-avatar-large">
+                            <MudAvatar Color="Color.Primary" Class="profile-avatar" Style="width: 100px; height: 100px;">
+                                <MudImage Src="@GetProfilePictureUrl(User)" Alt="Profile Avatar" Height="100" Width="100"/>
+                            </MudAvatar>
+                        </div>
+                    }
+
+                    <div class="profile-details">
+                        <div class="name-edit-section">
+                            @if (isEditingDisplayName)
+                            {
+                                <div class="display-name-edit">
+                                    <MudTextField @bind-Value="editDisplayName"
+                                                  Label="Display Name"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense"
+                                                  Class="edit-name-field"
+                                                  @ref="displayNameInput"
+                                                  MaxLength="100"
+                                                  Immediate="true"
+                                                  @oninput="@((ChangeEventArgs e) => OnDisplayNameChanged(e.Value?.ToString() ?? string.Empty))"
+                                                  @onkeypress="@(async (e) =>
+                                                               {
+                                                                   if (e.Key == "Enter") await SaveDisplayName();
+                                                                   else if (e.Key == "Escape") CancelEditDisplayName();
+                                                               })"/>
+                                    <div class="character-display">@editDisplayName.Length/100</div>
+                                    <div class="edit-actions">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Check"
+                                                       Color="Color.Success"
+                                                       Size="Size.Small"
+                                                       OnClick="SaveDisplayName"
+                                                       Class="save-btn"/>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                                       Color="Color.Error"
+                                                       Size="Size.Small"
+                                                       OnClick="CancelEditDisplayName"
+                                                       Class="cancel-btn"/>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="display-name-view">
+                                    <MudText Typo="Typo.h5" Class="display-name">@User.DisplayName</MudText>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                   Color="Color.Primary"
+                                                   Size="Size.Small"
+                                                   OnClick="StartEditDisplayName"
+                                                   Class="edit-name-btn"/>
+                                </div>
+                            }
+                        </div>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="user-email">@User.Email</MudText>
+                        @if (!string.IsNullOrEmpty(User.UserName))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="user-id">Username: @User.UserName</MudText>
+                        }
+                    </div>
+                </div>
+            </MudCardContent>
+        </MudCard>
+
+        <!-- System Prompts Card -->
+        <MudCard Class="system-prompts-card mb-4" Elevation="3">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <div class="d-flex align-center gap-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Psychology" Color="Color.Primary" />
+                        <MudText Typo="Typo.h6">System Prompt Settings</MudText>
+                    </div>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                    Configure how AI models should perceive and interact with you
+                </MudText>
+                
+                <div class="system-prompts-form">
+                    <div class="input-with-counter">
+                        <MudTextField @bind-Value="userRole"
+                                      Label="Your Role"
+                                      Placeholder="e.g., Software Developer, Student, Researcher..."
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Normal"
+                                      MaxLength="100"
+                                      Immediate="true"
+                                      @oninput="@((ChangeEventArgs e) => OnUserRoleChanged(e.Value?.ToString() ?? string.Empty))"
+                                      HelperText="Tell the AI what your professional role or position is"
+                                      Class="mb-3" />
+                        <div class="character-counter">@userRole.Length/100</div>
+                    </div>
+                    
+                    <div class="input-with-counter">
+                        <MudTextField @bind-Value="userSystemPrompt"
+                                      Label="System Prompt"
+                                      Placeholder="Describe how you want the AI to interact with you..."
+                                      Variant="Variant.Outlined"
+                                      Lines="4"
+                                      Margin="Margin.Normal"
+                                      MaxLength="5000"
+                                      Immediate="true"
+                                      @oninput="@((ChangeEventArgs e) => OnSystemPromptChanged(e.Value?.ToString() ?? string.Empty))"
+                                      HelperText="Provide specific instructions for how the AI should behave when talking to you"
+                                      Class="mb-3" />
+                        <div class="character-counter">@userSystemPrompt.Length/5000</div>
+                    </div>
+                    
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Personal Traits & Preferences</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-3">
+                        Add traits that help the AI understand your communication style and preferences (max 50 traits)
+                    </MudText>
+                    
+                    <div class="traits-section">
+                        <div class="traits-input">
+                            <div class="input-with-counter">
+                                <MudTextField @bind-Value="newTrait"
+                                              Label="Add a trait"
+                                              Placeholder="e.g., Prefers concise explanations, Likes humor..."
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              MaxLength="50"
+                                              Immediate="true"
+                                              @oninput="@((ChangeEventArgs e) => OnNewTraitChanged(e.Value?.ToString() ?? string.Empty))"
+                                              @onkeydown="@HandleTraitKeyDown"
+                                              Adornment="Adornment.End"
+                                              AdornmentIcon="@Icons.Material.Filled.Add"
+                                              OnAdornmentClick="AddTrait"
+                                              Disabled="@(userSystemTraits.Count >= 50)" />
+                                <div class="character-counter">@newTrait.Length/50</div>
+                            </div>
+                        </div>
+                        
+                        @if (userSystemTraits != null && userSystemTraits.Any())
+                        {
+                            <div class="traits-list">
+                                <div class="traits-count">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @userSystemTraits.Count/50 traits
+                                    </MudText>
+                                </div>
+                                <div class="traits-chips-container">
+                                    @foreach (var trait in userSystemTraits.Select((value, index) => new { value, index }))
+                                    {
+                                        <MudChip T="string"
+                                                 Label="true"
+                                                 OnClose="@(() => RemoveTrait(trait.index))"
+                                                 Color="Color.Primary"
+                                                 Variant="Variant.Outlined"
+                                                 Size="Size.Small"
+                                                 Class="trait-chip">
+                                            @trait.value
+                                        </MudChip>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    
+                    <div class="save-prompts-section">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Save"
+                                   OnClick="SaveUserProfile"
+                                   Disabled="isSaving"
+                                   Class="save-profile-btn">
+                            @if (isSaving)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                                <span class="ml-2">Saving...</span>
+                            }
+                            else
+                            {
+                                <span>Save Profile Settings</span>
+                            }
+                        </MudButton>
+                    </div>
+                </div>
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Account Actions Card -->
+        <MudCard Class="account-actions-card" Elevation="3">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <div class="d-flex align-center gap-2">
+                        <MudIcon Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Primary" />
+                        <MudText Typo="Typo.h6">Account Actions</MudText>
+                    </div>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <div class="account-actions">
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.SwitchAccount"
+                               OnClick="SwitchAccount"
+                               FullWidth="true"
+                               Class="action-btn switch-account-btn mb-3">
+                        Switch Account
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.ManageAccounts"
+                               OnClick="NavigateToManageProfile"
+                               FullWidth="true"
+                               Class="action-btn manage-profile-btn mb-3">
+                        Manage Profile
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Error"
+                               StartIcon="@Icons.Material.Filled.Logout"
+                               OnClick="LogoutUser"
+                               FullWidth="true"
+                               Class="action-btn logout-btn">
+                        Logout
+                    </MudButton>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    </div>
+}
+else
+{
+    <div class="loading-container">
+        <MudProgressCircular Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-3">Loading profile...</MudText>
+    </div>
+}
 
 @code {
     [CascadingParameter(Name = "User")] public UserDto? User { get; set; }
+    [CascadingParameter(Name = "UpdateUser")] public Action<UserDto>? UpdateUser { get; set; }
+
+    private bool isEditingDisplayName = false;
+    private bool isSaving = false;
+    private string editDisplayName = string.Empty;
+    private string userRole = string.Empty;
+    private string userSystemPrompt = string.Empty;
+    private List<string> userSystemTraits = new();
+    private string newTrait = string.Empty;
+    
+    private MudTextField<string>? displayNameInput;
+
+    protected override void OnParametersSet()
+    {
+        if (User != null)
+        {
+            editDisplayName = User.DisplayName ?? string.Empty;
+            
+            // Load existing user data from properties if they exist
+            // Using reflection to safely check for properties that might exist in the DTO
+            var userType = User.GetType();
+            
+            var roleProperty = userType.GetProperty("UserRole");
+            userRole = roleProperty?.GetValue(User)?.ToString() ?? string.Empty;
+            
+            var promptProperty = userType.GetProperty("UserSystemPrompt");
+            userSystemPrompt = promptProperty?.GetValue(User)?.ToString() ?? string.Empty;
+            
+            var traitsProperty = userType.GetProperty("UserSystemTraits");
+            if (traitsProperty?.GetValue(User) is string[] traits)
+            {
+                userSystemTraits = traits.ToList();
+            }
+            else
+            {
+                userSystemTraits = new List<string>();
+            }
+        }
+        base.OnParametersSet();
+    }
+
+    private void OnDisplayNameChanged(string value)
+    {
+        editDisplayName = value;
+        StateHasChanged();
+    }
+
+    private void OnUserRoleChanged(string value)
+    {
+        userRole = value;
+        StateHasChanged();
+    }
+
+    private void OnSystemPromptChanged(string value)
+    {
+        userSystemPrompt = value;
+        StateHasChanged();
+    }
+
+    private void OnNewTraitChanged(string value)
+    {
+        newTrait = value;
+        StateHasChanged();
+    }
+
+    private async Task StartEditDisplayName()
+    {
+        isEditingDisplayName = true;
+        editDisplayName = User?.DisplayName ?? string.Empty;
+        StateHasChanged();
+        
+        // Focus the input after render
+        await Task.Delay(150);
+        if (displayNameInput != null)
+        {
+            await displayNameInput.FocusAsync();
+        }
+    }
+
+    private void CancelEditDisplayName()
+    {
+        isEditingDisplayName = false;
+        editDisplayName = User?.DisplayName ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task SaveDisplayName()
+    {
+        if (string.IsNullOrWhiteSpace(editDisplayName))
+        {
+            Snackbar.Add("Display name cannot be empty", Severity.Warning);
+            return;
+        }
+
+        if (editDisplayName.Length > 100)
+        {
+            Snackbar.Add("Display name cannot exceed 100 characters", Severity.Warning);
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            var updateDto = new UpdateUserDto
+            {
+                DisplayName = editDisplayName.Trim(),
+                UserRole = userRole,
+                UserSystemPrompt = userSystemPrompt,
+                UserSystemTraits = userSystemTraits.ToArray()
+            };
+
+            var updatedUser = await ClientAuthenticationService.UpdateUserAsync(updateDto);
+            if (updatedUser != null)
+            {
+                isEditingDisplayName = false;
+                Snackbar.Add("Display name updated successfully", Severity.Success);
+                
+                // Update the cascading User parameter
+                UpdateUser?.Invoke(updatedUser);
+                
+                StateHasChanged();
+            }
+            else
+            {
+                Snackbar.Add("Failed to update display name", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating display name: {ex.Message}");
+            Snackbar.Add("Error updating display name", Severity.Error);
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleTraitKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await AddTrait();
+        }
+    }
+
+    private async Task AddTrait()
+    {
+        if (string.IsNullOrWhiteSpace(newTrait))
+            return;
+
+        if (userSystemTraits.Count >= 50)
+        {
+            Snackbar.Add("Cannot add more than 50 traits", Severity.Warning);
+            return;
+        }
+
+        var trimmedTrait = newTrait.Trim();
+        
+        if (trimmedTrait.Length > 50)
+        {
+            Snackbar.Add("Trait cannot exceed 50 characters", Severity.Warning);
+            return;
+        }
+
+        if (userSystemTraits.Contains(trimmedTrait))
+        {
+            Snackbar.Add("This trait already exists", Severity.Warning);
+            return;
+        }
+
+        userSystemTraits.Add(trimmedTrait);
+        newTrait = string.Empty;
+        StateHasChanged();
+    }
+
+    private void RemoveTrait(int index)
+    {
+        if (index >= 0 && index < userSystemTraits.Count)
+        {
+            userSystemTraits.RemoveAt(index);
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveUserProfile()
+    {
+        // Validate inputs
+        if (userRole.Length > 100)
+        {
+            Snackbar.Add("Role cannot exceed 100 characters", Severity.Warning);
+            return;
+        }
+
+        if (userSystemPrompt.Length > 5000)
+        {
+            Snackbar.Add("System prompt cannot exceed 5000 characters", Severity.Warning);
+            return;
+        }
+
+        if (userSystemTraits.Any(trait => trait.Length > 50))
+        {
+            Snackbar.Add("Traits cannot exceed 50 characters each", Severity.Warning);
+            return;
+        }
+
+        if (userSystemTraits.Count > 50)
+        {
+            Snackbar.Add("Cannot have more than 50 traits", Severity.Warning);
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            var updateDto = new UpdateUserDto
+            {
+                DisplayName = User?.DisplayName ?? string.Empty,
+                UserRole = userRole.Trim(),
+                UserSystemPrompt = userSystemPrompt.Trim(),
+                UserSystemTraits = userSystemTraits.ToArray()
+            };
+
+            var updatedUser = await ClientAuthenticationService.UpdateUserAsync(updateDto);
+            if (updatedUser != null)
+            {
+                Snackbar.Add("Profile settings saved successfully", Severity.Success);
+                
+                // Update the cascading User parameter
+                UpdateUser?.Invoke(updatedUser);
+            }
+            else
+            {
+                Snackbar.Add("Failed to save profile settings", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving profile: {ex.Message}");
+            Snackbar.Add("Error saving profile settings", Severity.Error);
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SwitchAccount()
+    {
+        Navigation.NavigateTo(AppsettingsService.ServerUrl + "/Account/Login", true);
+    }
 
     private void NavigateToManageProfile()
     {

@@ -9,20 +9,10 @@
 <div class="profile-page">
     <div class="profile-container">
         <MudContainer MaxWidth="MaxWidth.Large" Class="py-6">
-            <div class="d-flex justify-space-between align-center mb-6">
+            <div class="d-flex justify-center align-center mb-6">
                 <MudText Typo="Typo.h4" GutterBottom="true">
                     Settings
                 </MudText>
-                
-                <MudButton
-                    StartIcon="@Icons.Material.Filled.SwitchAccount"
-                    Variant="Variant.Outlined"
-                    Color="Color.Primary"
-                    Size="Size.Medium"
-                    OnClick="SwitchAccount"
-                    Class="switch-account-btn">
-                    Switch Account
-                </MudButton>
             </div>
             
             <MudTabs Elevation="4" Rounded="true" PanelClass="pa-6" Class="mt-4">
@@ -43,8 +33,4 @@
 </div>
 
 @code {
-    private void SwitchAccount()
-    {
-        Navigation.NavigateTo(AppsettingsService.ServerUrl + "/Account/Login", true);
-    }
 } 
