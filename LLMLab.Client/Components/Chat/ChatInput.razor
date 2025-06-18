@@ -5,6 +5,7 @@
 @inject AttachmentService AttachmentService
 @inject SettingsService SettingsService
 @inject ISnackbar Snackbar
+@inject GenerationService GenerationService
 
 <div class="hypermodern-chat-input-wrapper">
     <div class="hypermodern-input-container">
@@ -71,23 +72,49 @@
             </div>
             
             <div class="send-button-wrapper">
-                <button class="hypermodern-send-btn @(CanSend ? "enabled" : "disabled")"
-                        @onclick="SendMessage"
-                        disabled="@(!CanSend)"
-                        type="button">
-                    <div class="btn-content">
-                        @if (IsLoading)
-                        {
-                            <div class="loading-spinner"></div>
-                        }
-                        else
-                        {
-                            <svg class="send-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M2 21L23 12L2 3V10L17 12L2 14V21Z" fill="currentColor"/>
-                            </svg>
-                        }
-                    </div>
-                </button>
+                @if (!IsLastMessageComplete)
+                {
+                    <!-- Stop Button when generating -->
+                    <button class="hypermodern-send-btn stop-btn @(GenerationService.HasActiveGeneration() ? "enabled" : "disabled")"
+                            @onclick="StopGeneration"
+                            disabled="@(isStoppingGeneration || !GenerationService.HasActiveGeneration())"
+                            title="@(GenerationService.HasActiveGeneration() ? "Stop generation" : "No active generation")"
+                            type="button">
+                        <div class="btn-content">
+                            @if (isStoppingGeneration)
+                            {
+                                <div class="loading-spinner"></div>
+                            }
+                            else
+                            {
+                                <svg class="stop-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M6 6h12v12H6z"/>
+                                </svg>
+                            }
+                        </div>
+                    </button>
+                }
+                else
+                {
+                    <!-- Send Button when not generating -->
+                    <button class="hypermodern-send-btn @(CanSend ? "enabled" : "disabled")"
+                            @onclick="SendMessage"
+                            disabled="@(!CanSend)"
+                            type="button">
+                        <div class="btn-content">
+                            @if (IsLoading)
+                            {
+                                <div class="loading-spinner"></div>
+                            }
+                            else
+                            {
+                                <svg class="send-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M2 21L23 12L2 3V10L17 12L2 14V21Z" fill="currentColor"/>
+                                </svg>
+                            }
+                        </div>
+                    </button>
+                }
             </div>
         </div>
 
@@ -218,6 +245,7 @@
     private int pendingUploads = 0;
     private bool showModelModal = false;
     private bool showReasoningModal = false;
+    private bool isStoppingGeneration = false;
 
     private MessageDto message = new MessageDto();
     public ElementReference TextareaRef;
@@ -585,5 +613,38 @@
     {
         JSRuntime.InvokeVoidAsync("removeDocumentClickHandler");
         JSRuntime.InvokeVoidAsync("unregisterBlazorComponent", "reasoningMenu");
+    }
+
+    private async Task StopGeneration()
+    {
+        if (isStoppingGeneration) return;
+        
+        isStoppingGeneration = true;
+        StateHasChanged();
+        
+        try
+        {
+            // Use static method to access the actual connected GenerationService instance
+            bool success = await GenerationService.StopActiveGeneration();
+            
+            if (success)
+            {
+                Snackbar.Add("Generation stopped", Severity.Info);
+            }
+            else
+            {
+                Snackbar.Add("No active generation to stop", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to stop generation: {ex.Message}");
+            Snackbar.Add("Failed to stop generation", Severity.Error);
+        }
+        finally
+        {
+            isStoppingGeneration = false;
+            StateHasChanged();
+        }
     }
 }

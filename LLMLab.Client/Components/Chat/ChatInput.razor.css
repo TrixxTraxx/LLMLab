@@ -1028,3 +1028,114 @@
     display: block;        /* Ensures it takes up a full line */
     max-width: 160px;      /* Set max width as you prefer (adjust to your design) */
 }
+
+/* Send Button */
+.send-btn {
+    border-color: color-mix(in srgb, var(--mud-palette-success) 25%, transparent);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-success) 10%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-success) 6%, transparent) 100%);
+    color: var(--mud-palette-success);
+}
+
+.send-btn:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--mud-palette-success) 35%, transparent);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-success) 15%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-success) 8%, transparent) 100%);
+}
+
+.send-btn.enabled {
+    border-color: color-mix(in srgb, var(--mud-palette-success) 50%, transparent);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-success) 20%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-success) 12%, transparent) 100%);
+    color: var(--mud-palette-success);
+    font-weight: 600;
+}
+
+/* Stop Button */
+.hypermodern-send-btn.stop-btn {
+    border-color: color-mix(in srgb, var(--mud-palette-error) 25%, transparent);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-error) 12%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-error) 6%, transparent) 100%);
+    box-shadow: 
+        0 4px 12px color-mix(in srgb, var(--mud-palette-error) 20%, transparent),
+        0 2px 4px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 color-mix(in srgb, white, 20%);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hypermodern-send-btn.stop-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-error) 15%, transparent) 0%,
+        transparent 50%,
+        color-mix(in srgb, var(--mud-palette-error) 8%, transparent) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.hypermodern-send-btn.stop-btn:hover:not(:disabled) {
+    transform: translateY(-3px) scale(1.05);
+    border-color: color-mix(in srgb, var(--mud-palette-error) 40%, transparent);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-error) 18%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-error) 10%, transparent) 100%);
+    box-shadow: 
+        0 8px 25px color-mix(in srgb, var(--mud-palette-error) 30%, transparent),
+        0 4px 12px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 color-mix(in srgb, white, 30%);
+}
+
+.hypermodern-send-btn.stop-btn:hover:not(:disabled)::before {
+    opacity: 1;
+}
+
+.hypermodern-send-btn.stop-btn:active:not(:disabled) {
+    transform: translateY(-1px) scale(1.02);
+}
+
+.hypermodern-send-btn.stop-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    border-color: color-mix(in srgb, var(--mud-palette-error) 15%, transparent);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-error) 8%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-error) 4%, transparent) 100%);
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.06),
+        inset 0 1px 0 color-mix(in srgb, var(--mud-palette-surface) 10%, transparent);
+}
+
+.stop-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--mud-palette-error);
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.hypermodern-send-btn.stop-btn:hover:not(:disabled) .stop-icon {
+    transform: scale(1.1);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    color: color-mix(in srgb, var(--mud-palette-error) 120%, black);
+}
+
+.hypermodern-send-btn.stop-btn:disabled .stop-icon {
+    color: color-mix(in srgb, var(--mud-palette-error) 60%, transparent);
+    filter: none;
+}
+
+/* Loading spinner for stop button */
+.hypermodern-send-btn.stop-btn .loading-spinner {
+    border-color: color-mix(in srgb, var(--mud-palette-error) 30%, transparent);
+    border-top-color: var(--mud-palette-error);
+}
