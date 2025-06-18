@@ -160,12 +160,25 @@ window.autoResizeTextarea = function(textarea) {
     // Reset height to auto to get the correct scrollHeight
     textarea.style.height = 'auto';
     
-    // Calculate new height (min 52px, max 200px)
-    const newHeight = Math.min(Math.max(textarea.scrollHeight, 52), 200);
+    // Determine min and max heights based on the component
+    let minHeight, maxHeight;
+    
+    if (textarea.classList.contains('message-editor-textarea')) {
+        // MessageEditor component - larger heights
+        minHeight = 140;
+        maxHeight = 400;
+    } else {
+        // ChatInput component - original heights
+        minHeight = 52;
+        maxHeight = 200;
+    }
+    
+    // Calculate new height
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
     textarea.style.height = newHeight + 'px';
     
     // If content exceeds max height, show scrollbar
-    if (textarea.scrollHeight > 200) {
+    if (textarea.scrollHeight > maxHeight) {
         textarea.style.overflowY = 'auto';
     } else {
         textarea.style.overflowY = 'hidden';
