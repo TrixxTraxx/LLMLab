@@ -247,6 +247,111 @@ window.triggerFileInput = function(elementIdOrSupportedTypes, supportedContentTy
     }
 }
 
+// Handle paste events with file attachments
+window.setupPasteFileUpload = function(textareaElement, dotNetRef) {
+    if (!textareaElement || !dotNetRef) return;
+    
+    // Remove existing paste handler if it exists
+    if (textareaElement._pasteHandler) {
+        textareaElement.removeEventListener('paste', textareaElement._pasteHandler);
+    }
+    
+    textareaElement._pasteHandler = async function(event) {
+        try {
+            const clipboardData = event.clipboardData || window.clipboardData;
+            
+            if (!clipboardData || !clipboardData.items) {
+                return; // No clipboard data available
+            }
+            
+            const files = [];
+            
+            // Check for files in clipboard
+            for (let i = 0; i < clipboardData.items.length; i++) {
+                const item = clipboardData.items[i];
+                
+                if (item.kind === 'file') {
+                    const file = item.getAsFile();
+                    if (file) {
+                        files.push(file);
+                    }
+                }
+            }
+            
+            if (files.length > 0) {
+                // Prevent default paste behavior when files are detected
+                event.preventDefault();
+                
+                // Process each file and read its data
+                const fileDataArray = [];
+                
+                for (const file of files) {
+                    try {
+                        // Read file as ArrayBuffer
+                        const arrayBuffer = await file.arrayBuffer();
+                        const uint8Array = new Uint8Array(arrayBuffer);
+                        
+                        // Convert to base64 for transfer to C#
+                        const base64Data = btoa(String.fromCharCode.apply(null, uint8Array));
+                        
+                        fileDataArray.push({
+                            name: file.name || `pasted-file-${Date.now()}.${getFileExtension(file.type)}`,
+                            size: file.size,
+                            type: file.type || 'application/octet-stream',
+                            lastModified: file.lastModified || Date.now(),
+                            data: base64Data
+                        });
+                    } catch (error) {
+                        console.error('Error reading pasted file:', error);
+                    }
+                }
+                
+                if (fileDataArray.length > 0) {
+                    // Call the Blazor component method to handle pasted files
+                    await dotNetRef.invokeMethodAsync('HandlePastedFiles', fileDataArray);
+                }
+            }
+        } catch (error) {
+            console.error('Error handling paste event:', error);
+        }
+    };
+    
+    textareaElement.addEventListener('paste', textareaElement._pasteHandler);
+};
+
+// Helper function to get file extension from MIME type
+function getFileExtension(mimeType) {
+    const mimeToExt = {
+        'image/png': 'png',
+        'image/jpeg': 'jpg',
+        'image/gif': 'gif',
+        'image/webp': 'webp',
+        'image/svg+xml': 'svg',
+        'text/plain': 'txt',
+        'application/pdf': 'pdf',
+        'application/json': 'json',
+        'application/xml': 'xml',
+        'text/html': 'html',
+        'text/css': 'css',
+        'text/javascript': 'js',
+        'application/javascript': 'js'
+    };
+    return mimeToExt[mimeType] || 'bin';
+}
+
+// Get pasted files stored in window (no longer needed but keeping for compatibility)
+window.getPastedFiles = function() {
+    return [];
+};
+
+// Remove paste handler
+window.removePasteFileUpload = function(textareaElement) {
+    if (!textareaElement || !textareaElement._pasteHandler) return;
+    
+    textareaElement.removeEventListener('paste', textareaElement._pasteHandler);
+    delete textareaElement._pasteHandler;
+};
+
 window.setupChatInputAutoFocus = function (element) {
     if (!element) return;
     // Store handler on element so we can remove it later

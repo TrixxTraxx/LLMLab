@@ -36,7 +36,8 @@ public class Message
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
-    public int PreviousMessageId { get; set; } = 0;
+    public int? PreviousMessageId { get; set; } = 0;
+    public Message? PreviousMessage { get; set; }
     
     public string GenerationJobId { get; set; } = string.Empty;
 }

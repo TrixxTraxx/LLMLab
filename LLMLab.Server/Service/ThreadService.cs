@@ -109,13 +109,21 @@ public class ThreadService(
         // get all the messages in the message chain
         var currentMessage = thread.Messages.
             First(m => m.Id == messageId);
+        Message lastMessage = null;
         while (currentMessage != null)
         {
             // Create a copy of the message for the new thread by detaching it from the context
             context.Entry(currentMessage).State = EntityState.Detached;
+            var message = currentMessage;
             currentMessage.Id = 0; // Reset ID for the new thread
             messages.Add(currentMessage);
+            if (lastMessage != null)
+            {
+                lastMessage.PreviousMessageId = 0;
+                lastMessage.PreviousMessage = message; // Set the previous message reference
+            }
             if (currentMessage.PreviousMessageId == 0) break;
+            lastMessage = currentMessage; // Update lastMessage to the current one
             currentMessage = thread.Messages
                 .FirstOrDefault(m => m.Id == currentMessage.PreviousMessageId);
         }

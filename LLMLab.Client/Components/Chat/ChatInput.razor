@@ -1,5 +1,6 @@
 @using LLMLab.Client.Models
 @using LLMLab.Client.Services
+@using System.Text.Json
 @inject IJSRuntime JSRuntime
 @inject AiModelService AiModelService
 @inject AttachmentService AttachmentService
@@ -63,7 +64,7 @@
                     value="@message.Text"
                     @oninput="OnInput"
                     @onkeydown="HandleKeyDown"
-                    placeholder="Type your message..."
+                    placeholder="Type your message or paste files..."
                     disabled="@IsLoading"
                     class="hypermodern-textarea"
                     rows="1"
@@ -311,6 +312,18 @@
         StateHasChanged();
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("addDocumentClickHandler");
+            await JSRuntime.InvokeVoidAsync("registerBlazorComponent", "reasoningMenu", DotNetObjectReference.Create(this));
+            
+            // Set up paste file upload functionality
+            await JSRuntime.InvokeVoidAsync("setupPasteFileUpload", TextareaRef, DotNetObjectReference.Create(this));
+        }
+    }
+
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && !e.ShiftKey && !e.CtrlKey)
@@ -362,13 +375,8 @@
                     continue;
                 }
                 
-                // Check if file already exists
-                if (uploadedAttachments.Any(a => a.FileName == file.Name))
-                {
-                    Snackbar.Add($"File {file.Name} is already uploaded.", Severity.Warning);
-                    pendingUploads--;
-                    continue;
-                }
+                // Generate unique filename if duplicate exists
+                var uniqueFileName = GenerateUniqueFileName(file.Name);
 
                 // Check if current model supports the file type for images
                 if (IsImageAttachment(file.ContentType) && !SelectedModelSupportsImages())
@@ -386,8 +394,11 @@
                     continue;
                 }
                 
+                // Create a wrapper with unique filename if needed
+                var fileToUpload = uniqueFileName != file.Name ? new RenamedBrowserFile(file, uniqueFileName) : file;
+                
                 // Upload immediately
-                var attachment = await AttachmentService.UploadAttachment(file);
+                var attachment = await AttachmentService.UploadAttachment(fileToUpload);
                 if (attachment != null)
                 {
                     uploadedAttachments.Add(attachment);
@@ -406,6 +417,123 @@
         
         isUploading = false;
         StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task HandlePastedFiles(PastedFileData[] fileDataArray)
+    {
+        try
+        {
+            if (fileDataArray == null || fileDataArray.Length == 0)
+            {
+                return;
+            }
+
+            // Check if model supports file uploads
+            if (!SelectedModelSupportsFiles())
+            {
+                Snackbar.Add($"The selected model '{GetSelectedModelName()}' does not support file attachments.", Severity.Error);
+                return;
+            }
+
+            isUploading = true;
+            pendingUploads = fileDataArray.Length;
+            StateHasChanged();
+
+            foreach (var fileData in fileDataArray)
+            {
+                try
+                {
+                    // Check file size (1MB limit)
+                    if (fileData.Size > 1024 * 1024)
+                    {
+                        Snackbar.Add($"Pasted file is too large. Maximum size is 1MB.", Severity.Error);
+                        pendingUploads--;
+                        continue;
+                    }
+
+                    // Generate unique filename if duplicate exists
+                    var uniqueFileName = GenerateUniqueFileName(fileData.Name);
+                    
+                    // Update the file data with unique filename
+                    if (uniqueFileName != fileData.Name)
+                    {
+                        fileData.Name = uniqueFileName;
+                    }
+
+                    // Check if current model supports the file type for images
+                    if (IsImageAttachment(fileData.Type) && !SelectedModelSupportsImages())
+                    {
+                        Snackbar.Add($"The selected model '{GetSelectedModelName()}' does not support image files.", Severity.Error);
+                        pendingUploads--;
+                        continue;
+                    }
+
+                    // Check if file type is supported
+                    if (!IsFileTypeSupported(fileData.Type))
+                    {
+                        Snackbar.Add($"File type '{fileData.Type}' is not supported by the selected model '{GetSelectedModelName()}'", Severity.Error);
+                        pendingUploads--;
+                        continue;
+                    }
+
+                    // Create a wrapper around the file data
+                    var browserFile = new JSBrowserFile(fileData);
+                    
+                    // Upload the file
+                    var attachment = await AttachmentService.UploadAttachment(browserFile);
+                    if (attachment != null)
+                    {
+                        uploadedAttachments.Add(attachment);
+                        Snackbar.Add($"Pasted file uploaded successfully", Severity.Success);
+                    }
+
+                    pendingUploads--;
+                    StateHasChanged();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error uploading pasted file: {ex.Message}");
+                    Snackbar.Add($"Error uploading pasted file: {ex.Message}", Severity.Error);
+                    pendingUploads--;
+                }
+            }
+
+            isUploading = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error handling pasted files: {ex.Message}");
+            Snackbar.Add($"Error handling pasted files: {ex.Message}", Severity.Error);
+            isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GenerateUniqueFileName(string originalFileName)
+    {
+        var existingNames = uploadedAttachments.Select(a => a.FileName).ToHashSet();
+        
+        if (!existingNames.Contains(originalFileName))
+        {
+            return originalFileName;
+        }
+        
+        // Split filename and extension
+        var nameWithoutExtension = Path.GetFileNameWithoutExtension(originalFileName);
+        var extension = Path.GetExtension(originalFileName);
+        
+        var counter = 1;
+        string uniqueName;
+        
+        do
+        {
+            uniqueName = $"{nameWithoutExtension} ({counter}){extension}";
+            counter++;
+        } while (existingNames.Contains(uniqueName));
+        
+        return uniqueName;
     }
 
     private void RemoveAttachment(AttachmentDto attachment)
@@ -591,15 +719,6 @@
         };
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await JSRuntime.InvokeVoidAsync("addDocumentClickHandler");
-            await JSRuntime.InvokeVoidAsync("registerBlazorComponent", "reasoningMenu", DotNetObjectReference.Create(this));
-        }
-    }
-
     [JSInvokable]
     public void HandleDocumentClick()
     {
@@ -607,12 +726,6 @@
         {
             CloseReasoningModal();
         }
-    }
-
-    public void Dispose()
-    {
-        JSRuntime.InvokeVoidAsync("removeDocumentClickHandler");
-        JSRuntime.InvokeVoidAsync("unregisterBlazorComponent", "reasoningMenu");
     }
 
     private async Task StopGeneration()
@@ -647,4 +760,13 @@
             StateHasChanged();
         }
     }
-}
+
+    public void Dispose()
+    {
+        // Clean up paste event handler
+        JSRuntime.InvokeVoidAsync("removePasteFileUpload", TextareaRef);
+        
+        JSRuntime.InvokeVoidAsync("removeDocumentClickHandler");
+        JSRuntime.InvokeVoidAsync("unregisterBlazorComponent", "reasoningMenu");
+    }
+} 
