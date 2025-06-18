@@ -33,12 +33,22 @@ public class AiGenerationService(
             throw new ArgumentException("Message not found", nameof(messageId));
         }
         
+        
+        
         // Mark the message as complete
         message.Complete = true;
         await dbContext.SaveChangesAsync();
-        
+
         // Notify clients that the generation has stopped
         await hubContext.Clients.Group(messageId.ToString()).SendAsync("GenerationStopped", MessageMapper.Map(message));
+
+        //cancel any ongoing background job for this message
+        //var jobId = message.GenerationJobId;
+        //if (!string.IsNullOrEmpty(jobId))
+        {
+            //BackgroundJob.Delete(jobId);
+        }
+        
     }
 
     public async Task AddTokenToGeneration(int messageId, string token, bool isThinkingToken)

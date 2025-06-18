@@ -47,8 +47,7 @@ public class GenerationService : IAsyncDisposable
     private string tokenCache = string.Empty;
 
     // Static tracking of active generation sessions
-    private static readonly Dictionary<int, GenerationService> _activeGenerations = new();
-    private static GenerationService? _currentActiveGeneration;
+    private static readonly List<GenerationService> _activeGenerations = new();
 
     public GenerationService(AppsettingsService appsettingsService, MessageSyncService messageService)
     {
@@ -58,6 +57,7 @@ public class GenerationService : IAsyncDisposable
 
     public async Task ConnectAsync(MessageCache cache)
     {
+        var generation = this;
         Console.WriteLine("Connecting to Message hub with MessageId: " + cache.Message.Id);
         if (_hubConnection != null)
         {
@@ -66,9 +66,8 @@ public class GenerationService : IAsyncDisposable
 
         _currentMessageCache = cache;
 
-        // Register this instance as active
-        _activeGenerations[cache.Message.Id] = this;
-        _currentActiveGeneration = this;
+        // Register this instance as activeessage.Id);
+        _activeGenerations.Add(this);
 
         var hubUrl = $"{_appsettingsService.ServerUrl}/MessageHub?messageId={cache.Message.Id}";
         
@@ -102,11 +101,7 @@ public class GenerationService : IAsyncDisposable
             _messageService.UpdateMessageCache(_currentMessageCache);
             
             // Clean up static references
-            _activeGenerations.Remove(message.Id);
-            if (_currentActiveGeneration == this)
-            {
-                _currentActiveGeneration = null;
-            }
+            _activeGenerations.Remove(generation);
             
             // disconnect from the hub
             _hubConnection?.StopAsync().ContinueWith(t => 
@@ -169,14 +164,7 @@ public class GenerationService : IAsyncDisposable
         }
         
         // Clean up static references
-        if (_currentMessageCache != null)
-        {
-            _activeGenerations.Remove(_currentMessageCache.Message.Id);
-        }
-        if (_currentActiveGeneration == this)
-        {
-            _currentActiveGeneration = null;
-        }
+        _activeGenerations.Remove(this);
         
         _currentMessageCache = null;
     }
@@ -187,9 +175,22 @@ public class GenerationService : IAsyncDisposable
     /// <returns></returns>
     public static async Task<bool> StopActiveGeneration()
     {
-        if (_currentActiveGeneration != null && _currentActiveGeneration.IsConnected)
+        if (_activeGenerations.Any(g => g.IsConnected))
         {
-            await _currentActiveGeneration.StopGeneration();
+            foreach (var g in _activeGenerations)
+            {
+                if (g.IsConnected)
+                {
+                    try
+                    {
+                        await g.StopGeneration();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error stopping generation for {g.CurrentMessageId}: {ex.Message}");
+                    }
+                }
+            }
             return true;
         }
         return false;
@@ -201,16 +202,7 @@ public class GenerationService : IAsyncDisposable
     /// <returns></returns>
     public static bool HasActiveGeneration()
     {
-        return _currentActiveGeneration != null && _currentActiveGeneration.IsConnected;
-    }
-
-    /// <summary>
-    /// Get the current active generation message ID
-    /// </summary>
-    /// <returns></returns>
-    public static int? GetActiveGenerationMessageId()
-    {
-        return _currentActiveGeneration?.CurrentMessageId;
+        return _activeGenerations.Any(g => g.IsConnected);
     }
 
     public async Task StopGeneration()
