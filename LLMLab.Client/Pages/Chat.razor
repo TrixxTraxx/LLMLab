@@ -178,7 +178,7 @@
         isSending = true;
         
         message.ThreadId = ThreadId ?? 0;
-        message.PreviousMessageId = currentBranchPath;
+        message.PreviousMessageId = currentBranchPath == 0 ? null : currentBranchPath;
         
         try
         {
@@ -241,7 +241,7 @@
             ModelId = ChatInput.SelectedModelId,
             ReasoningEffortLevel = ChatInput.SelectedReasoningLevel
         };
-        currentBranchPath = message.Message.PreviousMessageId;
+        currentBranchPath = message.Message.PreviousMessageId.HasValue ? message.Message.PreviousMessageId.Value : 0;
         //reset current branch up to the message
         currentBranch = messageTree?.GetMessagesForBranch(currentBranchPath) ?? new List<MessageCache>();
         await HandleSendMessage(newMessage);

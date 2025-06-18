@@ -113,7 +113,7 @@ public class MessageSyncService
         // Populate previous and next messages
         foreach (var message in caches.Values)
         {
-            if (message.Message.PreviousMessageId != 0 && caches.TryGetValue(message.Message.PreviousMessageId, out var previousMessage))
+            if (message.Message.PreviousMessageId.HasValue && caches.TryGetValue(message.Message.PreviousMessageId!.Value, out var previousMessage))
             {
                 messageTree.PreviousMessages[message.Message.Id] = previousMessage;
             }

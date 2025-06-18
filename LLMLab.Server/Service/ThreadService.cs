@@ -119,10 +119,10 @@ public class ThreadService(
             messages.Add(currentMessage);
             if (lastMessage != null)
             {
-                lastMessage.PreviousMessageId = 0;
+                lastMessage.PreviousMessageId = null;
                 lastMessage.PreviousMessage = message; // Set the previous message reference
             }
-            if (currentMessage.PreviousMessageId == 0) break;
+            if (currentMessage.PreviousMessageId == null) break;
             lastMessage = currentMessage; // Update lastMessage to the current one
             currentMessage = thread.Messages
                 .FirstOrDefault(m => m.Id == currentMessage.PreviousMessageId);

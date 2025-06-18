@@ -40,7 +40,7 @@ public class MessageTreeDto
         {
             Console.WriteLine("No previous message found, considering the root message.");
             var messageKeys = Messages
-                .Where(x => x.Value.Message.PreviousMessageId == 0)
+                .Where(x => x.Value.Message.PreviousMessageId == null)
                 .OrderBy(x => x.Value.Message.CreatedAt)
                 .Select(x => x.Key)
                 .ToList();

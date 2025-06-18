@@ -190,7 +190,7 @@ public class GenerateMessageJob(
             while (currentMessage != null)
             {
                 chain.Add(currentMessage);
-                if (currentMessage.PreviousMessageId == 0)
+                if (currentMessage.PreviousMessageId == null)
                 {
                     break; // No previous message, end of chain
                 }

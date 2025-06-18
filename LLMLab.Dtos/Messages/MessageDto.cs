@@ -18,7 +18,7 @@ public class MessageDto
     public string ModelResponse { get; set; } = string.Empty;
 
     [Key(4)]
-    public int PreviousMessageId { get; set; } = 0;
+    public int? PreviousMessageId { get; set; } = null;
 
     [Key(5)]
     public bool Complete { get; set; } = false;
