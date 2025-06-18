@@ -61,6 +61,6 @@ public class MessageHub(
         var messageId = Context.Items["MessageId"]!.ToString();
 
         // Call the service to stop generation
-        await aiGenerationService.StopGeneration(int.Parse(messageId));
+        await aiGenerationService.StopGeneration(int.Parse(messageId), true);
     }
 }

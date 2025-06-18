@@ -82,7 +82,8 @@ public class MessageService(
         await context.SaveChangesAsync();
         threadService.SendThreadUpdate(thread.UserId);
         
-        await aiService.StartGeneration(newMessage.Id);
+        newMessage.GenerationJobId = aiService.StartGeneration(newMessage.Id);
+        await context.SaveChangesAsync();
         
         //return the result
         return MessageMapper.Map(newMessage);

@@ -13,9 +13,9 @@ public class AiGenerationService(
     IHubContext<MessageHub> hubContext
 )
 {
-    public async Task StartGeneration(int messageId)
+    public string StartGeneration(int messageId)
     {
-        BackgroundJob.Enqueue<GenerateMessageJob>(x => x.GenerateMessageAsync(messageId));
+        return BackgroundJob.Enqueue<GenerateMessageJob>(x => x.GenerateMessageAsync(messageId));
     }
 
     public async Task GenerateThreadTitle(int threadId, string newMessageText)
@@ -23,7 +23,7 @@ public class AiGenerationService(
         BackgroundJob.Enqueue<GenerateThreadTitleJob>(x => x.GenerateThreadTitleAsync(threadId, newMessageText));
     }
 
-    public async Task StopGeneration(int messageId)
+    public async Task StopGeneration(int messageId, bool cancelJob = false)
     {
         var message = await dbContext.Messages
             .Include(x => x.Attachments)
@@ -32,23 +32,28 @@ public class AiGenerationService(
         {
             throw new ArgumentException("Message not found", nameof(messageId));
         }
-        
-        
-        
-        // Mark the message as complete
-        message.Complete = true;
-        await dbContext.SaveChangesAsync();
 
-        // Notify clients that the generation has stopped
-        await hubContext.Clients.Group(messageId.ToString()).SendAsync("GenerationStopped", MessageMapper.Map(message));
 
-        //cancel any ongoing background job for this message
-        //var jobId = message.GenerationJobId;
-        //if (!string.IsNullOrEmpty(jobId))
+
+        //TODO: properly cancel the Jobs
+        /*if (cancelJob)
         {
-            //BackgroundJob.Delete(jobId);
+            //cancel any ongoing background job for this message
+            var jobId = message.GenerationJobId;
+            if (!string.IsNullOrEmpty(jobId))
+            {
+                BackgroundJob.Delete(jobId);
+            }
         }
-        
+        else*/
+        {
+            // Mark the message as complete
+            message.Complete = true;
+            await dbContext.SaveChangesAsync();
+
+            // Notify clients that the generation has stopped
+            await hubContext.Clients.Group(messageId.ToString()).SendAsync("GenerationStopped", MessageMapper.Map(message));
+        }
     }
 
     public async Task AddTokenToGeneration(int messageId, string token, bool isThinkingToken)
