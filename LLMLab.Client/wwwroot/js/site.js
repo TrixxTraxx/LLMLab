@@ -2,6 +2,21 @@ window.getWindowWidth = function() {
     return window.innerWidth;
 };
 
+// Detect if device supports touch interactions
+window.isTouchDevice = function() {
+    return (('ontouchstart' in window) ||
+            (navigator.maxTouchPoints > 0) ||
+            (navigator.msMaxTouchPoints > 0));
+};
+
+// Check if device is mobile with touch
+window.isMobileWithTouch = function() {
+    const width = window.innerWidth;
+    const isMobile = width < 768;
+    const hasTouch = window.isTouchDevice();
+    return isMobile && hasTouch;
+};
+
 window.focusElement = function(element) {
     if (element) {
         element.focus();

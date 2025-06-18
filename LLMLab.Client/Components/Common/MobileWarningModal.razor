@@ -1,0 +1,134 @@
+@inject IJSRuntime JSRuntime
+@inject ILocalStorageService LocalStorage
+@using Blazored.LocalStorage
+
+<MudDialog @bind-Visible="@_isVisible"
+           Options="@_dialogOptions"
+           Class="mobile-warning-dialog">
+    <DialogContent>
+        <div class="mobile-warning-content">
+            <MudIcon Icon="@Icons.Material.Filled.Warning" 
+                     Size="Size.Large" 
+                     Color="Color.Warning" 
+                     Class="warning-icon" />
+            <MudText Typo="Typo.h6" Class="warning-title">
+                Mobile Device Detected
+            </MudText>
+            <MudText Typo="Typo.body1" Class="warning-message">
+                This application is not optimized for mopbile use yet. While we continue to work on Mobile support, you may experience functionality or interface issues. 
+                For the best experience, we recommend using a desktop or laptop computer.
+            </MudText>
+            <div class="warning-actions">
+                <MudCheckBox @bind-Value="@_dontShowAgain" 
+                            Label="Don't show this warning again" 
+                            Dense="true" 
+                            Class="dont-show-checkbox" />
+            </div>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@CloseDialog" 
+                   Color="Color.Primary" 
+                   Variant="Variant.Filled">
+            Continue Anyway
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+<style>
+    .mobile-warning-dialog .mud-dialog-content {
+        padding: 24px;
+    }
+    
+    .mobile-warning-content {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+    }
+    
+    .warning-icon {
+        font-size: 48px !important;
+    }
+    
+    .warning-title {
+        font-weight: 600;
+        color: var(--mud-palette-warning);
+    }
+    
+    .warning-message {
+        max-width: 400px;
+        line-height: 1.5;
+        text-align: center;
+    }
+    
+    .warning-actions {
+        margin-top: 8px;
+    }
+    
+    .dont-show-checkbox {
+        justify-content: center;
+    }
+</style>
+
+@code {
+    private bool _isVisible = false;
+    private bool _dontShowAgain = false;
+    private const string DontShowAgainKey = "mobile_warning_dismissed";
+    
+    private DialogOptions _dialogOptions = new()
+    {
+        CloseOnEscapeKey = false,
+        MaxWidth = MaxWidth.Small,
+        FullWidth = true
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckAndShowWarning();
+    }
+
+    private async Task CheckAndShowWarning()
+    {
+        try
+        {
+            // Check if user has previously dismissed the warning
+            var dismissed = await LocalStorage.GetItemAsync<bool>(DontShowAgainKey);
+            if (dismissed)
+                return;
+
+            // Check if device is mobile with touch
+            var isMobileWithTouch = await JSRuntime.InvokeAsync<bool>("isMobileWithTouch");
+            if (isMobileWithTouch)
+            {
+                _isVisible = true;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            // Fail silently - don't block the app if warning can't be shown
+            Console.WriteLine($"Mobile warning check failed: {ex.Message}");
+        }
+    }
+
+    private async Task CloseDialog()
+    {
+        _isVisible = false;
+        
+        if (_dontShowAgain)
+        {
+            try
+            {
+                await LocalStorage.SetItemAsync(DontShowAgainKey, true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to save warning preference: {ex.Message}");
+            }
+        }
+        
+        StateHasChanged();
+    }
+} 
