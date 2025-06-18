@@ -618,23 +618,30 @@
     }
 
     [JSInvokable]
-    public void HandleRejectedFiles(RejectedFileInfo[] rejectedFiles)
+    public void AddSnackbarMessage(string message, string severity = "Warning")
     {
         try
         {
-            if (rejectedFiles == null || rejectedFiles.Length == 0)
+            Console.WriteLine($"AddSnackbarMessage called with message: '{message}', severity: '{severity}'");
+            
+            var snackbarSeverity = severity.ToLower() switch
             {
-                return;
-            }
-
-            foreach (var rejected in rejectedFiles)
-            {
-                Snackbar.Add($"'{rejected.Name}': {rejected.Reason}", Severity.Warning);
-            }
+                "error" => Severity.Error,
+                "success" => Severity.Success,
+                "info" => Severity.Info,
+                _ => Severity.Warning
+            };
+            
+            Console.WriteLine($"Converted severity to: {snackbarSeverity}");
+            
+            Snackbar.Add(message, snackbarSeverity);
+            
+            Console.WriteLine($"Successfully added snackbar message: '{message}'");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error handling rejected files: {ex.Message}");
+            Console.WriteLine($"Error adding snackbar message: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
     }
 

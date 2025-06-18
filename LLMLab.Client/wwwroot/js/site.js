@@ -392,9 +392,23 @@ window.setupPasteFileUpload = function(textareaElement, dotNetRef) {
                     await dotNetRef.invokeMethodAsync('HandlePastedFiles', fileDataArray);
                 }
                 
-                // Send rejected files information to show user messages
+                // Send rejected file messages individually
                 if (rejectedFiles.length > 0) {
-                    await dotNetRef.invokeMethodAsync('HandleRejectedFiles', rejectedFiles);
+                    for (const rejected of rejectedFiles) {
+                        try {
+                            console.log(`Trying to call AddSnackbarMessage for pasted file: ${rejected.name}`);
+                            await dotNetRef.invokeMethodAsync('AddSnackbarMessage', `'${rejected.name}': ${rejected.reason}`, 'Warning');
+                            console.log(`Successfully called AddSnackbarMessage for pasted file: ${rejected.name}`);
+                        } catch (error) {
+                            console.error(`Failed to call AddSnackbarMessage for pasted file ${rejected.name}:`, error);
+                            // Try to call a simpler method to test if dotNetRef works at all
+                            try {
+                                await dotNetRef.invokeMethodAsync('AddSnackbarMessage', 'Error showing pasted file rejection message', 'Error');
+                            } catch (fallbackError) {
+                                console.error('Even fallback message for pasted file failed:', fallbackError);
+                            }
+                        }
+                    }
                 }
             }
         } catch (error) {
@@ -723,6 +737,8 @@ window.setupDragAndDrop = function(dropZoneElement, dotNetRef) {
         return;
     }
 
+    console.log('Setting up drag and drop with dotNetRef:', dotNetRef);
+
     // Remove existing handlers if they exist
     if (dropZoneElement._dragDropHandlers) {
         removeDragAndDrop(dropZoneElement);
@@ -756,6 +772,8 @@ window.setupDragAndDrop = function(dropZoneElement, dotNetRef) {
             e.preventDefault();
             e.stopPropagation();
             dropZoneElement.classList.remove('drag-over');
+            
+            console.log('Drop event triggered, dotNetRef available:', !!dotNetRef);
             
             try {
                 const files = Array.from(e.dataTransfer.files);
@@ -839,7 +857,6 @@ window.setupDragAndDrop = function(dropZoneElement, dotNetRef) {
                 
                 if (validFiles.length === 0) {
                     console.warn('No valid files to upload');
-                    return;
                 }
                 
                 // Convert valid files to the format expected by Blazor
@@ -866,9 +883,23 @@ window.setupDragAndDrop = function(dropZoneElement, dotNetRef) {
                     await dotNetRef.invokeMethodAsync('HandleDroppedFiles', fileDataArray);
                 }
                 
-                // Send rejected files information to show user messages
+                // Send rejected file messages individually
                 if (rejectedFiles.length > 0) {
-                    await dotNetRef.invokeMethodAsync('HandleRejectedFiles', rejectedFiles);
+                    for (const rejected of rejectedFiles) {
+                        try {
+                            console.log(`Trying to call AddSnackbarMessage for: ${rejected.name}`);
+                            await dotNetRef.invokeMethodAsync('AddSnackbarMessage', `'${rejected.name}': ${rejected.reason}`, 'Warning');
+                            console.log(`Successfully called AddSnackbarMessage for: ${rejected.name}`);
+                        } catch (error) {
+                            console.error(`Failed to call AddSnackbarMessage for ${rejected.name}:`, error);
+                            // Try to call a simpler method to test if dotNetRef works at all
+                            try {
+                                await dotNetRef.invokeMethodAsync('AddSnackbarMessage', 'Error showing file rejection message', 'Error');
+                            } catch (fallbackError) {
+                                console.error('Even fallback message failed:', fallbackError);
+                            }
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Error handling drop event:', error);
