@@ -698,7 +698,120 @@
     .upload-progress {
         padding: 10px 12px;
     }
-} 
+}
+
+/* Attachment Chips - matching MessageEditor style */
+.attachment-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 4px 4px;
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-surface) 100%, white) 0%,
+        color-mix(in srgb, var(--mud-palette-surface) 90%, white) 100%);
+    border: 1px solid color-mix(in srgb, var(--mud-palette-surface) 60%, transparent);
+    border-radius: 20px;
+    font-size: 12px;
+    max-width: 180px;
+    transition: all 0.2s ease;
+}
+
+.attachment-chip:hover {
+    border-color: color-mix(in srgb, var(--mud-palette-primary) 30%, transparent);
+    transform: translateY(-1px);
+}
+
+.attachment-chip .attachment-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-primary) 15%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-primary) 8%, transparent) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.attachment-chip .attachment-icon svg {
+    width: 12px;
+    height: 12px;
+    color: var(--mud-palette-primary);
+}
+
+.attachment-chip .attachment-name {
+    font-weight: 500;
+    color: var(--mud-palette-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+}
+
+.attachment-chip .remove-attachment-btn {
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: transparent;
+    color: var(--mud-palette-text-secondary);
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.attachment-chip .remove-attachment-btn:hover {
+    background: color-mix(in srgb, var(--mud-palette-error) 15%, transparent);
+    color: var(--mud-palette-error);
+}
+
+.attachment-chip .remove-attachment-btn svg {
+    width: 10px;
+    height: 10px;
+}
+
+/* Responsive Design for Attachment Chips */
+@media (max-width: 768px) {
+    .attachments-section {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .uploaded-attachments {
+        gap: 6px;
+    }
+    
+    .attachment-chip {
+        max-width: 160px;
+    }
+    
+    .attachment-chip .attachment-name {
+        max-width: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .uploaded-attachments {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .attachment-chip {
+        max-width: 100%;
+    }
+    
+    .attachment-chip .attachment-name {
+        max-width: 120px;
+    }
+    
+    .upload-progress {
+        padding: 10px 12px;
+    }
+}
 
 .hiddenFileInput{
     display: none;
