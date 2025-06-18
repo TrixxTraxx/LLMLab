@@ -69,11 +69,7 @@
                                 </div>
                             }
                         </div>
-                        <MudText Typo="Typo.body2" Class="user-email">@User.Email</MudText>
-                        @if (!string.IsNullOrEmpty(User.UserName))
-                        {
-                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="user-id">Username: @User.UserName</MudText>
-                        }
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="user-email">@User.Email</MudText>
                     </div>
                 </div>
             </MudCardContent>
