@@ -251,7 +251,7 @@
         color-mix(in srgb, var(--mud-palette-surface) 70%, transparent) 100%);
     border: 2px solid color-mix(in srgb, var(--mud-palette-primary) 15%, transparent);
     border-radius: 10px;
-    color: var(--mud-palette-text-secondary);
+    color: var(--mud-palette-text);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
