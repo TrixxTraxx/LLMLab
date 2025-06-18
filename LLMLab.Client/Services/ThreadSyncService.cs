@@ -116,11 +116,11 @@ public class ThreadSyncService
             
             var updateDto = await response.Content.ReadFromJsonAsync<ThreadUpdateDto>();
             
-            //Console.WriteLine($"Updating {updateDto!.UpdatedThreads.Count} threads");
+            Console.WriteLine($"Updating {updateDto!.UpdatedThreads.Count} threads");
 
             foreach (var thread in updateDto!.UpdatedThreads)
             {
-                Console.WriteLine($"updating thread with Id: {thread.Id}");
+                Console.WriteLine($"Updating thread with Id: {thread.Id}");
                 try
                 {
                     //find thread cache by id
@@ -156,11 +156,12 @@ public class ThreadSyncService
                 Console.WriteLine($"Thread {thread.Id} updated");
             }
 
-            if (updateDto!.UpdatedThreads?.Any() ?? false)
+            Console.WriteLine($"Updating {updateDto!.UpdatedThreads.Count} threads 2");
+            if (updateDto.UpdatedThreads.Count > 0)
             {
                 try
                 {
-                    //Console.WriteLine($"{_threadCaches.Count} Threads are up to date!");
+                    // Console.WriteLine($"{_threadCaches.Count} Threads are up to date!");
                     update?.Invoke(_threadCaches);
                 }
                 catch (Exception ex)
@@ -224,12 +225,7 @@ public class ThreadSyncService
             if (response.IsSuccessStatusCode)
             {
                 var newThreadId = await response.Content.ReadFromJsonAsync<int>();
-                // Update threads to refresh the cache with the new branched thread
-                await UpdateThreadCaches(x =>
-                {
-                    callback.Invoke(newThreadId);
-                    ThreadsUpdated?.Invoke(x);
-                });
+                callback.Invoke(newThreadId);
             }
             else
             {
