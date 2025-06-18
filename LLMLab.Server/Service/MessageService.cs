@@ -32,21 +32,6 @@ public class MessageService(
         newMessage.CreatedAt = DateTime.UtcNow;
         newMessage.ModelResponse = string.Empty; // Initialize with empty response
         
-        //add attachments if any
-        if (dto.AttachmentIds.Any())
-        {
-            var attachments = context.MessageAttachments
-                .Where(a => dto.AttachmentIds.Contains(a.Id));
-            foreach (var attachment in attachments)
-            {
-                if (attachment.MessageId != null)
-                {
-                    throw new BadHttpRequestException("Attachment already linked to another message.");
-                }
-                attachment.Message = newMessage;
-            }
-        }
-        
         //create new thread if it doesn't exist
         var thread = await context.MessageThreads
             .FirstOrDefaultAsync(t => t.Id == dto.ThreadId && t.UserId == userId);
@@ -66,6 +51,31 @@ public class MessageService(
         user.ThreadVersion++;
         thread.UpdatedAt = DateTime.UtcNow;
         thread.Version = user.ThreadVersion; // Increment thread version
+        
+        
+        //add attachments if any
+        if (dto.AttachmentIds.Any())
+        {
+            var attachments = context.MessageAttachments
+                .Where(a => dto.AttachmentIds.Contains(a.Id));
+            foreach (var attachment in attachments)
+            {
+                if (attachment.MessageId != null)
+                {
+                    //detach from context
+                    context.Entry(attachment).State = EntityState.Detached;
+                    //now that we cloned the attachment, make a new attachment with the new message and the same content
+                    attachment.Message = newMessage;
+                    attachment.Id = 0; // Reset ID to create a new attachment
+                    //add the attachment to the db
+                    context.MessageAttachments.Add(attachment);
+                }
+                else
+                {
+                    attachment.Message = newMessage;
+                }
+            }
+        }
         
         //add message to database
         context.Messages.Add(newMessage);

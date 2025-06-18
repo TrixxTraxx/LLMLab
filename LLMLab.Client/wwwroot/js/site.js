@@ -207,12 +207,27 @@ window.downloadFile = function(url, filename) {
 }
 
 // Trigger file input selection
-window.triggerFileInput = function(supportedContentTypes) {
+window.triggerFileInput = function(elementIdOrSupportedTypes, supportedContentTypes) {
     try {
-        const fileInput = document.getElementById('hiddenFileInput');
-        fileInput.setAttribute('accept', supportedContentTypes || '*/*');
-        if (fileInput && fileInput.click) {
-            fileInput.click();
+        let fileInput;
+        let acceptTypes;
+        
+        // Support both old and new calling patterns
+        if (typeof elementIdOrSupportedTypes === 'string' && elementIdOrSupportedTypes.includes('hiddenFileInput')) {
+            // New pattern: triggerFileInput(elementId)
+            fileInput = document.getElementById(elementIdOrSupportedTypes);
+            acceptTypes = supportedContentTypes || '*/*';
+        } else {
+            // Old pattern: triggerFileInput(supportedContentTypes)
+            fileInput = document.getElementById('hiddenFileInput');
+            acceptTypes = elementIdOrSupportedTypes || '*/*';
+        }
+        
+        if (fileInput) {
+            fileInput.setAttribute('accept', acceptTypes);
+            if (fileInput.click) {
+                fileInput.click();
+            }
         }
     } catch (err) {
         console.error('Failed to trigger file input:', err);

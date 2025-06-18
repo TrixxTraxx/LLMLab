@@ -1,0 +1,472 @@
+.message-editor-wrapper {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-surface) 95%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-surface) 75%, transparent) 100%);
+    border: 2px solid color-mix(in srgb, var(--mud-palette-warning) 30%, transparent);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    margin: 8px 0;
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        0 2px 8px color-mix(in srgb, var(--mud-palette-warning) 15%, transparent);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.message-editor-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Attachments Section */
+.editor-attachments-section {
+    padding: 12px;
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-surface) 100%, white) 0%,
+        color-mix(in srgb, var(--mud-palette-surface) 85%, white) 100%);
+    border: 1px solid color-mix(in srgb, var(--mud-palette-surface) 60%, transparent);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.uploaded-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.uploaded-attachment {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-surface) 100%, white) 0%,
+        color-mix(in srgb, var(--mud-palette-surface) 80%, white) 100%);
+    border: 1px solid color-mix(in srgb, var(--mud-palette-surface) 60%, transparent);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    max-width: 260px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.uploaded-attachment:hover {
+    border-color: color-mix(in srgb, var(--mud-palette-primary) 30%, transparent);
+    transform: translateY(-1px);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        0 2px 8px color-mix(in srgb, var(--mud-palette-primary) 15%, transparent);
+}
+
+.attachment-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-primary) 15%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-primary) 8%, transparent) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.attachment-icon svg {
+    width: 18px;
+    height: 18px;
+    color: var(--mud-palette-primary);
+}
+
+.attachment-details {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+}
+
+.attachment-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--mud-palette-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
+.attachment-meta {
+    font-size: 11px;
+    color: var(--mud-palette-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.remove-attachment {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--mud-palette-text-secondary);
+    cursor: pointer;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.remove-attachment:hover {
+    background: color-mix(in srgb, var(--mud-palette-error) 15%, transparent);
+    color: var(--mud-palette-error);
+}
+
+.remove-attachment svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* Upload Progress */
+.upload-progress {
+    padding: 10px 14px;
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-primary) 8%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-primary) 4%, transparent) 100%);
+    border: 1px solid color-mix(in srgb, var(--mud-palette-primary) 20%, transparent);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.upload-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.upload-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--mud-palette-primary);
+}
+
+.upload-info span {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--mud-palette-primary);
+}
+
+.upload-spinner .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid color-mix(in srgb, var(--mud-palette-primary) 30%, transparent);
+    border-top: 2px solid var(--mud-palette-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Input Field */
+.editor-input-field-wrapper {
+    width: 100%;
+}
+
+.textarea-wrapper {
+    width: 100%;
+    position: relative;
+}
+
+.message-editor-textarea {
+    width: 100%;
+    min-height: 80px;
+    max-height: 300px;
+    padding: 16px 20px;
+    border: 2px solid color-mix(in srgb, var(--mud-palette-surface) 60%, transparent);
+    border-radius: 16px;
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-surface) 100%, white) 0%,
+        color-mix(in srgb, var(--mud-palette-surface) 90%, white) 100%);
+    color: var(--mud-palette-text-primary);
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-family: inherit;
+}
+
+.message-editor-textarea:focus {
+    border-color: var(--mud-palette-primary);
+    box-shadow: 
+        0 0 0 4px color-mix(in srgb, var(--mud-palette-primary) 15%, transparent),
+        0 4px 12px rgba(0, 0, 0, 0.08);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-surface) 100%, white) 0%,
+        color-mix(in srgb, var(--mud-palette-surface) 95%, white) 100%);
+}
+
+.message-editor-textarea:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.message-editor-textarea::placeholder {
+    color: var(--mud-palette-text-secondary);
+    opacity: 0.7;
+}
+
+/* Control Row */
+.editor-control-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+}
+
+.editor-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.editor-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-surface) 90%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-surface) 70%, transparent) 100%);
+    color: var(--mud-palette-text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    outline: none;
+}
+
+.editor-action-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        0 2px 8px color-mix(in srgb, var(--mud-palette-primary) 15%, transparent);
+}
+
+.editor-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.editor-action-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Cancel Button */
+.cancel-btn {
+    border-color: color-mix(in srgb, var(--mud-palette-error) 20%, transparent);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-error) 8%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-error) 4%, transparent) 100%);
+    color: var(--mud-palette-error);
+}
+
+.cancel-btn:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--mud-palette-error) 30%, transparent);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-error) 12%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-error) 6%, transparent) 100%);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        0 2px 8px color-mix(in srgb, var(--mud-palette-error) 15%, transparent);
+}
+
+/* Attachment Button */
+.attachment-btn {
+    border-color: color-mix(in srgb, var(--mud-palette-info) 20%, transparent);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-info) 8%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-info) 4%, transparent) 100%);
+    color: var(--mud-palette-info);
+}
+
+.attachment-btn:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--mud-palette-info) 30%, transparent);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-info) 12%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-info) 6%, transparent) 100%);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        0 2px 8px color-mix(in srgb, var(--mud-palette-info) 15%, transparent);
+}
+
+.attachment-btn.active {
+    border-color: color-mix(in srgb, var(--mud-palette-info) 40%, transparent);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-info) 15%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-info) 8%, transparent) 100%);
+}
+
+/* Save Button */
+.save-btn {
+    border-color: color-mix(in srgb, var(--mud-palette-success) 20%, transparent);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-success) 8%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-success) 4%, transparent) 100%);
+    color: var(--mud-palette-success);
+}
+
+.save-btn:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--mud-palette-success) 30%, transparent);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-success) 12%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-success) 6%, transparent) 100%);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        0 2px 8px color-mix(in srgb, var(--mud-palette-success) 15%, transparent);
+}
+
+.save-btn.enabled {
+    border-color: color-mix(in srgb, var(--mud-palette-success) 40%, transparent);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-success) 15%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-success) 8%, transparent) 100%);
+    color: var(--mud-palette-success);
+    font-weight: 600;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid color-mix(in srgb, var(--mud-palette-success) 30%, transparent);
+    border-top: 2px solid var(--mud-palette-success);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Hidden file input */
+.hidden-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.hiddenFileInput {
+    display: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .message-editor-wrapper {
+        padding: 12px;
+        margin: 6px 0;
+    }
+    
+    .editor-attachments-section {
+        padding: 10px;
+    }
+    
+    .uploaded-attachments {
+        gap: 6px;
+    }
+    
+    .uploaded-attachment {
+        max-width: 100%;
+        padding: 8px 10px;
+    }
+    
+    .attachment-icon {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .attachment-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .attachment-name {
+        max-width: 120px;
+        font-size: 12px;
+    }
+    
+    .attachment-meta {
+        font-size: 10px;
+    }
+    
+    .message-editor-textarea {
+        padding: 14px 16px;
+        font-size: 14px;
+    }
+    
+    .editor-control-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .editor-actions {
+        justify-content: center;
+        gap: 6px;
+    }
+    
+    .editor-action-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .uploaded-attachments {
+        flex-direction: column;
+    }
+    
+    .uploaded-attachment {
+        max-width: 100%;
+    }
+    
+    .editor-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .editor-action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .attachment-name {
+        max-width: 100px;
+    }
+} 

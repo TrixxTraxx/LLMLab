@@ -32,6 +32,9 @@
                 OnRegenerateMessage="RegenerateMessage"
                 OnSuggestionClicked="HandleSuggestionClick"
                 OnBranchSelected="HandleBranchSelected"
+                OnMessageEdited="HandleMessageEdited"
+                CurrentModelId="ChatInput?.SelectedModelId ?? 1"
+                CurrentReasoningLevel="ChatInput?.SelectedReasoningLevel ?? ReasoningEffortLevel.None"
             />
         }
     </div>
@@ -271,6 +274,12 @@
         currentBranchPath = messageTree!.GetBranchFromMessage(id);
         currentBranch = messageTree.GetMessagesForBranch(currentBranchPath);
         StateHasChanged();
+    }
+
+    private async Task HandleMessageEdited(MessageCache editedMessage)
+    {
+        // Refresh the message tree to get the latest data
+        await LoadChat();
     }
 
     public void Dispose()

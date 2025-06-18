@@ -12,6 +12,9 @@
                 OnBranchSelected="OnBranchSelected"
                 OnRegenerateMessage="OnRegenerateMessage"
                 OnContentChanged="OnMessageContentChanged"
+                OnMessageEdited="OnMessageEdited"
+                CurrentModelId="CurrentModelId"
+                CurrentReasoningLevel="CurrentReasoningLevel"
                 ReadOnly="ReadOnly"
             />
         }
@@ -30,6 +33,9 @@
     [Parameter] public EventCallback<MessageCache> OnRegenerateMessage { get; set; }
     [Parameter] public EventCallback OnMessageContentChanged { get; set; }
     [Parameter] public EventCallback<string> OnSuggestionClicked { get; set; }
+    [Parameter] public EventCallback<MessageCache> OnMessageEdited { get; set; }
+    [Parameter] public int CurrentModelId { get; set; } = 1;
+    [Parameter] public ReasoningEffortLevel CurrentReasoningLevel { get; set; } = ReasoningEffortLevel.None;
     [Parameter] public bool ReadOnly { get; set; } = false;
     
     private int _lastMessagesCount = 0;

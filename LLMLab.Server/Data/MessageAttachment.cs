@@ -10,6 +10,8 @@ public class MessageAttachment
     public string FileName { get; set; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
 
+    
+    public int ContentId { get; set; }
     public AttachementContent Content { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

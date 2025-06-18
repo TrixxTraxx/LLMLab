@@ -203,7 +203,38 @@ public class MessageSyncService
     }
 
     /// <summary>
-    /// Updates a message cache and persists it to storage
+    /// Updates a message on the server and in cache
+    /// </summary>
+    public async Task<MessageDto> UpdateMessage(MessageCache messageCache)
+    {
+        var response = await _http.PutAsJsonAsync($"api/message/{messageCache.Message.Id}", messageCache.Message);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception($"Failed to update message: {response.ReasonPhrase}");
+        }
+        
+        var updatedMessage = await response.Content.ReadFromJsonAsync<MessageDto>();
+        if (updatedMessage == null)
+        {
+            throw new Exception("Failed to parse updated message.");
+        }
+
+        // Update the cache
+        messageCache.Message = updatedMessage;
+        messageCache.LastUpdated = DateTime.UtcNow;
+        
+        _messageCaches[updatedMessage.Id] = messageCache;
+        
+        messageCache.OnUpdated.Invoke();
+        
+        // Store in local storage
+        await _storageService.StoreObjectAsync($"MessageCache_{updatedMessage.Id}", messageCache);
+        
+        return updatedMessage;
+    }
+
+    /// <summary>
+    /// Updates a message cache and persists it to storage only (no server sync)
     /// </summary>
     public async Task UpdateMessageCache(MessageCache messageCache)
     {
