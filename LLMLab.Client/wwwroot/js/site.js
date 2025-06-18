@@ -317,7 +317,7 @@ window.removeDocumentClickHandler = function() {
 
 window.renderLatex = function(content) {
     if (typeof katex === 'undefined') {
-        console.warn('KaTeX is not loaded');
+        console.warn('LaTeX is not loaded');
         return;
     }
     // Render the LateX string as HTML
@@ -333,3 +333,121 @@ window.renderLatex = function(content) {
         console.error('Error rendering LaTeX:', error);
     }
 }
+
+window.registerChatHistoryShortcuts = function(dotNetRef) {
+    // Detect platform - use userAgent as primary method, platform as fallback
+    const isMac = navigator.userAgent.indexOf('Mac') !== -1 || 
+                  (navigator.platform && navigator.platform.indexOf('Mac') !== -1);
+    
+    function handler(e) {
+        const isK = (e.key === 'k' || e.key === 'K');
+        const isB = (e.key === 'b' || e.key === 'B');
+        
+        if (isMac) {
+            // On Mac: only Cmd+K and Cmd+B work
+            if (e.metaKey && isK) {
+                e.preventDefault();
+                dotNetRef.invokeMethodAsync('OpenSearchShortcut');
+            }
+            if (e.metaKey && isB) {
+                e.preventDefault();
+                dotNetRef.invokeMethodAsync('NewChatShortcut');
+            }
+        } else {
+            // On Windows/Linux: only Ctrl+K and Ctrl+B work
+            if (e.ctrlKey && isK) {
+                e.preventDefault();
+                dotNetRef.invokeMethodAsync('OpenSearchShortcut');
+            }
+            if (e.ctrlKey && isB) {
+                e.preventDefault();
+                dotNetRef.invokeMethodAsync('NewChatShortcut');
+            }
+        }
+    }
+    window.__chatHistoryShortcutHandler = handler;
+    window.addEventListener('keydown', handler);
+}
+
+window.unregisterChatHistoryShortcuts = function() {
+    if (window.__chatHistoryShortcutHandler) {
+        window.removeEventListener('keydown', window.__chatHistoryShortcutHandler);
+        window.__chatHistoryShortcutHandler = null;
+    }
+}
+
+// Register visual feedback for keyboard shortcuts
+window.registerShortcutVisual = function(shortcut, element) {
+    if (!element) return;
+
+    const isMac = isMacPlatform();
+    let platformShortcut = shortcut;
+    if (isMac && shortcut.startsWith('ctrl+')) {
+        platformShortcut = shortcut.replace('ctrl+', 'meta+');
+    } else if (!isMac && shortcut.startsWith('cmd+')) {
+        platformShortcut = shortcut.replace('cmd+', 'ctrl+');
+    }
+    const keys = platformShortcut.toLowerCase().split('+').map(k => k.trim());
+    let animationTimeout = null;
+
+    function matchesShortcut(e, keyArr) {
+        return keyArr.every(key => {
+            if (key === 'ctrl') return e.ctrlKey;
+            if (key === 'shift') return e.shiftKey;
+            if (key === 'alt') return e.altKey;
+            if (key === 'meta') return e.metaKey;
+            return e.key.toLowerCase() === key;
+        });
+    }
+
+    function onKeyDown(e) {
+        // Only animate on the first keydown, not on repeats
+        if (matchesShortcut(e, keys) && !e.repeat) {
+            if (animationTimeout) {
+                clearTimeout(animationTimeout);
+                animationTimeout = null;
+            }
+            if (element && element.style) {
+                element.style.opacity = '0.6';
+                element.style.transform = 'scale(0.92)';
+                element.style.background = 'rgba(180, 180, 180, 0.3)';
+                element.style.borderColor = 'rgba(100, 100, 100, 0.25)';
+                element.style.color = 'var(--mud-palette-text-primary, #333)';
+            }
+            animationTimeout = setTimeout(() => {
+                if (element && element.style) {
+                    element.style.opacity = '';
+                    element.style.transform = '';
+                    element.style.background = '';
+                    element.style.borderColor = '';
+                    element.style.color = '';
+                }
+                animationTimeout = null;
+            }, 200);
+        }
+    }
+
+    window.addEventListener('keydown', onKeyDown);
+
+    // Cleanup
+    return function() {
+        window.removeEventListener('keydown', onKeyDown);
+        if (animationTimeout) {
+            clearTimeout(animationTimeout);
+            animationTimeout = null;
+        }
+        if (element && element.style) {
+            element.style.opacity = '';
+            element.style.transform = '';
+            element.style.background = '';
+            element.style.borderColor = '';
+            element.style.color = '';
+        }
+    };
+};
+
+// Safe platform detection function for Blazor interop
+window.isMacPlatform = function() {
+    return navigator.userAgent.indexOf('Mac') !== -1 || 
+           (navigator.platform && navigator.platform.indexOf('Mac') !== -1);
+};

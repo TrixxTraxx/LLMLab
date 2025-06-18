@@ -6,6 +6,7 @@
 @using LLMLab.Client.Services
 @implements IAsyncDisposable
 @inject ThreadSignalRService ThreadSignalRService
+@inject IJSRuntime JSRuntime
 
 <div class="chat-history-container">
     <div class="new-chat-section">
@@ -27,6 +28,7 @@
     private List<ThreadCache> threads = new List<ThreadCache>();
     private int? currentThreadId;
     private bool isSearchModalVisible;
+    private DotNetObjectReference<ChatHistory>? _dotNetRef;
 
     protected override async Task OnInitializedAsync()
     {
@@ -58,6 +60,9 @@
         });
 
         await ThreadSignalRService.ConnectAsync();
+        
+        _dotNetRef = DotNetObjectReference.Create(this);
+        await JSRuntime.InvokeVoidAsync("registerChatHistoryShortcuts", _dotNetRef);
     }
 
     private async void UpdateThreads(List<ThreadCache> caches)
@@ -117,6 +122,18 @@
     {
         // Navigation is handled by the ThreadNavigation component
     }
+    
+    [JSInvokable]
+    public void OpenSearchShortcut()
+    {
+        StartSearch();
+    }
+
+    [JSInvokable]
+    public void NewChatShortcut()
+    {
+        StartNewChat();
+    }
 
     public async ValueTask DisposeAsync()
     {
@@ -124,5 +141,11 @@
         
         NavigationManager.LocationChanged -= OnLocationChanged;
         await ThreadSignalRService.DisposeAsync();
+        
+        if (_dotNetRef != null)
+        {
+            await JSRuntime.InvokeVoidAsync("unregisterChatHistoryShortcuts");
+            _dotNetRef.Dispose();
+        }
     }
 }

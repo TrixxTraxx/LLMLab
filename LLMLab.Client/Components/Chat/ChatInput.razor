@@ -303,6 +303,10 @@
     private async Task OnInput(ChangeEventArgs e)
     {
         message.Text = e.Value?.ToString() ?? string.Empty;
+        if (showReasoningModal)
+        {
+            showReasoningModal = false;
+        }
         await JSRuntime.InvokeVoidAsync("autoResizeTextarea", TextareaRef);
     }
 
