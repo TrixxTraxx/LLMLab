@@ -10,8 +10,7 @@ namespace LLMLab.Client.Services;
 public class MessageSyncService
 {
     private Dictionary<int, MessageCache> _messageCaches { get; } = new();
-    private HashSet<int> _activeGenerations { get; } = new();
-
+    
     private readonly HttpClient _http;
     private readonly ISnackbar _snackbar;
     private readonly StorageService _storageService;
@@ -173,33 +172,43 @@ public class MessageSyncService
 
     public async Task<MessageDto> SendMessage(MessageCache cache)
     {
-        var response = await _http.PostAsJsonAsync("api/message", cache.Message);
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            throw new Exception($"Failed to send message: {response.ReasonPhrase}");
-        }
-        
-        var sentMessage = await response.Content.ReadFromJsonAsync<MessageDto>();
-        if (sentMessage == null)
-        {
-            throw new Exception("Failed to parse sent message.");
-        }
+            var response = await _http.PostAsJsonAsync("api/message", cache.Message);
+            if (!response.IsSuccessStatusCode)
+            {
+                _snackbar.Add($"An Unexpected Error Occoured while sending your message: {response.ReasonPhrase}",
+                    Severity.Error);
+                throw new Exception($"Failed to send message: {response.ReasonPhrase}");
+            }
 
-        // Update the cache
-        cache.Message = sentMessage;
-        cache.LastUpdated = DateTime.UtcNow;
-        
-        _messageCaches[sentMessage.Id] = cache;
-        
-        cache.OnUpdated.Invoke();
-        
-        // Store in local storage
-        await _storageService.StoreObjectAsync($"MessageCache_{sentMessage.Id}", cache);
-        
-        // refresh the thread cache now
-        await _threadSyncService.Update();
-        
-        return sentMessage;
+            var sentMessage = await response.Content.ReadFromJsonAsync<MessageDto>();
+            if (sentMessage == null)
+            {
+                throw new Exception("Failed to parse sent message.");
+            }
+
+            // Update the cache
+            cache.Message = sentMessage;
+            cache.LastUpdated = DateTime.UtcNow;
+
+            _messageCaches[sentMessage.Id] = cache;
+
+            cache.OnUpdated.Invoke();
+
+            // Store in local storage
+            await _storageService.StoreObjectAsync($"MessageCache_{sentMessage.Id}", cache);
+
+            // refresh the thread cache now
+            await _threadSyncService.Update();
+
+            return sentMessage;
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"An Unexpected Error Occurred while sending your message: {ex.Message}", Severity.Error);
+            throw;
+        }
     }
 
     /// <summary>
