@@ -6,7 +6,7 @@
 @inject ISnackbar Snackbar
 
 <MudText Typo="Typo.h6" GutterBottom="true">Profile Management</MudText>
-<MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+<MudText Typo="Typo.body2" Class="mb-4">
     Manage your account settings, system prompts, and profile information
 </MudText>
 
@@ -41,23 +41,19 @@
                                                   MaxLength="100"
                                                   Immediate="true"
                                                   @oninput="@((ChangeEventArgs e) => OnDisplayNameChanged(e.Value?.ToString() ?? string.Empty))"
-                                                  @onkeypress="@(async (e) =>
-                                                               {
-                                                                   if (e.Key == "Enter") await SaveDisplayName();
-                                                                   else if (e.Key == "Escape") CancelEditDisplayName();
-                                                               })"/>
+                                                  @onkeypress="@(async (e) => { if (e.Key == "Enter") await SaveDisplayName(); else if (e.Key == "Escape") CancelEditDisplayName(); })" />
                                     <div class="character-display">@editDisplayName.Length/100</div>
                                     <div class="edit-actions">
                                         <MudIconButton Icon="@Icons.Material.Filled.Check"
                                                        Color="Color.Success"
                                                        Size="Size.Small"
                                                        OnClick="SaveDisplayName"
-                                                       Class="save-btn"/>
+                                                       Class="save-btn" />
                                         <MudIconButton Icon="@Icons.Material.Filled.Close"
                                                        Color="Color.Error"
                                                        Size="Size.Small"
                                                        OnClick="CancelEditDisplayName"
-                                                       Class="cancel-btn"/>
+                                                       Class="cancel-btn" />
                                     </div>
                                 </div>
                             }
@@ -69,11 +65,11 @@
                                                    Color="Color.Primary"
                                                    Size="Size.Small"
                                                    OnClick="StartEditDisplayName"
-                                                   Class="edit-name-btn"/>
+                                                   Class="edit-name-btn" />
                                 </div>
                             }
                         </div>
-                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="user-email">@User.Email</MudText>
+                        <MudText Typo="Typo.body2" Class="user-email">@User.Email</MudText>
                         @if (!string.IsNullOrEmpty(User.UserName))
                         {
                             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="user-id">Username: @User.UserName</MudText>
@@ -94,7 +90,7 @@
                 </CardHeaderContent>
             </MudCardHeader>
             <MudCardContent>
-                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                <MudText Typo="Typo.body2" Class="mb-4">
                     Configure how AI models should perceive and interact with you
                 </MudText>
                 
