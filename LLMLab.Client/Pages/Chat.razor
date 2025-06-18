@@ -5,6 +5,7 @@
 @using LLMLab.Client.Components.Chat
 @using LLMLab.Client.Models
 @using LLMLab.Client.Services
+@implements IDisposable
 @inject MessageSyncService MessageSyncService
 @inject ISnackbar Snackbar
 @inject IJSRuntime JSRuntime
@@ -73,15 +74,7 @@
     private DotNetObjectReference<Chat>? _chatRef; // replace with your component name!
     
     private bool IsLastMessageComplete => currentBranch.Count == 0 || currentBranch[0].Message.Complete;
-    
-    [JSInvokable]
-    public void SetScrolledToBottom(bool atBottom)
-    {
-        if (_wasScrolledToBottom == atBottom) return;
-        _wasScrolledToBottom = atBottom;
-        InvokeAsync(StateHasChanged);
-    }
-    
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -97,8 +90,17 @@
         ThreadSyncService.ThreadsUpdated += ThreadsUpdated;
     }
 
+    [JSInvokable]
+    public void SetScrolledToBottom(bool atBottom)
+    {
+        if (_wasScrolledToBottom == atBottom) return;
+        _wasScrolledToBottom = atBottom;
+        InvokeAsync(StateHasChanged);
+    }
+
     private void ThreadsUpdated(List<ThreadCache> threads)
     {
+        Console.WriteLine($"Called ThreadsUpdated with {threads.Count} threads");
         UpdateMessages();
     }
 
@@ -124,6 +126,7 @@
 
     private async Task LoadChat()
     {
+        Console.WriteLine($"Loading Chat for Id: {ThreadId}");
         if (ThreadId.HasValue)
         {
             try
@@ -131,6 +134,7 @@
                 var oldMessageId = currentBranchPath;
                 messageTree = await MessageSyncService.GetMessageTree(ThreadId.Value);
                 InitializeBranchPath();
+                Console.WriteLine($"Loading Potential Changes in chat, skipping update. (oldMessageId: {oldMessageId}, currentBranchPath: {currentBranchPath})");
                 if (oldMessageId == currentBranchPath && !isLoading)
                 {
                     //nothing changed
@@ -142,8 +146,10 @@
                 Console.WriteLine($"Error loading chat: {ex.Message}");
                 messageTree = null;
             }
-
+            
+            Console.WriteLine($"Loaded Chat for Id: {ThreadId}");
             isLoading = false;
+            StateHasChanged();
         }
         else
         {
@@ -265,6 +271,11 @@
         currentBranchPath = messageTree!.GetBranchFromMessage(id);
         currentBranch = messageTree.GetMessagesForBranch(currentBranchPath);
         StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        ThreadSyncService.ThreadsUpdated -= ThreadsUpdated;
     }
 
 } 
