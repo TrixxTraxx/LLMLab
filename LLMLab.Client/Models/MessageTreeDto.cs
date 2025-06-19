@@ -38,7 +38,7 @@ public class MessageTreeDto
         var previousMessage = PreviousMessages.GetValueOrDefault(messageId);
         if (previousMessage == null)
         {
-            Console.WriteLine("No previous message found, considering the root message.");
+            //Console.WriteLine("No previous message found, considering the root message.");
             var messageKeys = Messages
                 .Where(x => x.Value.Message.PreviousMessageId == null)
                 .OrderBy(x => x.Value.Message.CreatedAt)
@@ -48,7 +48,7 @@ public class MessageTreeDto
         }
         var nextMessages = NextMessages.GetValueOrDefault(previousMessage.Message.Id);
         
-        Console.WriteLine("Found messages at same level: " + (string.Join(", ", NextMessages.Select(x => $"{x.Key}: {string.Join(", ", x.Value.Select(m => m.Message.Id))}"))));
+        //Console.WriteLine("Found messages at same level: " + (string.Join(", ", NextMessages.Select(x => $"{x.Key}: {string.Join(", ", x.Value.Select(m => m.Message.Id))}"))));
         return ConvertMessageKeysIntoPaginationInfo(nextMessages?
                 .OrderBy(x => x.Message.CreatedAt)
                 .Select(x => x.Message.Id)
@@ -61,21 +61,21 @@ public class MessageTreeDto
     {
         if (messageKeys == null || messageKeys.Count == 0)
         {
-            Console.WriteLine("MessageKeys Empty or null for messageId: " + messageId);
+            //Console.WriteLine("MessageKeys Empty or null for messageId: " + messageId);
             return (null, null, 0, 0);
         }
         
         var index = messageKeys.IndexOf(messageId);
         if (index < 0)
         {
-            Console.WriteLine("found invalid Message Tree pagination info for messageId: " + messageId);
+            //Console.WriteLine("found invalid Message Tree pagination info for messageId: " + messageId);
             return (null, null, 0, 0);
         }
 
         int? nextId = index < messageKeys.Count - 1 ? messageKeys[index + 1] : null;
         int? previousId = index > 0 ? messageKeys[index - 1] : null;
         
-        Console.WriteLine("found Pagination Info: " + nextId + ", " + previousId + ", " + messageKeys.Count + ", " + index);
+        //Console.WriteLine("found Pagination Info: " + nextId + ", " + previousId + ", " + messageKeys.Count + ", " + index);
         return (nextId, previousId, messageKeys.Count, index);
     }
 

@@ -140,7 +140,7 @@ public class GenerationService : IAsyncDisposable
             tokenCache = token;
             _ = Task.Run(async () =>
             {
-                await Task.Delay(16); // 60 times per second max
+                //await Task.Delay(16); // 60 times per second max
                 if (!string.IsNullOrEmpty(tokenCache))
                 {
                     _currentMessageCache.Message.ModelResponse += tokenCache;
