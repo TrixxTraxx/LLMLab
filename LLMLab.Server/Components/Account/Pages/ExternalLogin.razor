@@ -29,7 +29,7 @@
             <div class="login-welcome-title">Associate your @ProviderDisplayName account</div>
             <div class="login-welcome-subtitle">
                 You've successfully authenticated with <strong>@ProviderDisplayName</strong>. 
-                Please enter an email address to complete your registration.
+                Please enter an email address to complete your registration. If an account with this email already exists, it will be linked to your @ProviderDisplayName account.
             </div>
 
             @if (!string.IsNullOrEmpty(message))
@@ -167,43 +167,57 @@
         }
 
         var emailStore = GetEmailStore();
-        var user = CreateUser();
-
-        await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-        await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
         
-        user.DisplayName = GetGoogleUserName() ?? Input.Email;
+        // Check if a user with this email already exists
+        var existingUser = await UserManager.FindByEmailAsync(Input.Email);
         
-        // Set profile picture URL from Google if available
-        if (externalLoginInfo.LoginProvider == "Google" || externalLoginInfo.LoginProvider.ToLower().Contains("google"))
+        if (existingUser != null)
         {
-            user.ProfilePictureUrl = GetGoogleProfilePictureUrl()!;
-        }
-
-        var result = await UserManager.CreateAsync(user);
-        if (result.Succeeded)
-        {
-            result = await UserManager.AddLoginAsync(user, externalLoginInfo);
-            if (result.Succeeded)
+            // User already exists, try to link the external login to the existing account
+            var loginInfo = new UserLoginInfo(
+                externalLoginInfo.LoginProvider,
+                externalLoginInfo.ProviderKey,
+                GetProviderDisplayName(externalLoginInfo.LoginProvider));
+            var linkResult = await UserManager.AddLoginAsync(existingUser, loginInfo);
+            
+            if (linkResult.Succeeded)
             {
-                Logger.LogInformation("User created an account using {Name} provider.", externalLoginInfo.LoginProvider);
-
-                var userId = await UserManager.GetUserIdAsync(user);
-                var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-                code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-                var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-                    NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-                    new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
-                await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
-
-                // If account confirmation is required, we need to show the link if we don't have a real email sender
-                if (UserManager.Options.SignIn.RequireConfirmedAccount)
+                Logger.LogInformation("External login {Provider} linked to existing user {Email}.", 
+                    externalLoginInfo.LoginProvider, Input.Email);
+                
+                // Update user profile if we have better information from the provider
+                var updated = false;
+                
+                // Update display name if it's empty or we have a better one from the provider
+                var providerUserName = GetProviderUserName();
+                if (!string.IsNullOrEmpty(providerUserName) && 
+                    (string.IsNullOrEmpty(existingUser.DisplayName) || existingUser.DisplayName == existingUser.Email))
                 {
-                    RedirectManager.RedirectTo("Account/RegisterConfirmation", new() { ["email"] = Input.Email });
+                    existingUser.DisplayName = providerUserName;
+                    updated = true;
                 }
-
-                await SignInManager.SignInAsync(user, isPersistent: false, externalLoginInfo.LoginProvider);
+                
+                // Update profile picture if it's empty or we have a better one from the provider
+                var providerPictureUrl = GetProviderProfilePictureUrl();
+                if (!string.IsNullOrEmpty(providerPictureUrl) && 
+                    (string.IsNullOrEmpty(existingUser.ProfilePictureUrl) || 
+                     existingUser.ProfilePictureUrl.Contains("gravatar.com")))
+                {
+                    existingUser.ProfilePictureUrl = providerPictureUrl;
+                    updated = true;
+                }
+                
+                // Save any updates
+                if (updated)
+                {
+                    await UserManager.UpdateAsync(existingUser);
+                }
+                
+                // Sign in the user
+                await SignInManager.SignInAsync(existingUser, isPersistent: false, externalLoginInfo.LoginProvider);
+                
+                // Show success message
+                message = $"Successfully linked your {externalLoginInfo.LoginProvider} account to your existing account!";
                 
                 // Check if we should redirect to the client URL instead of the return URL
                 if (string.IsNullOrEmpty(ReturnUrl) || ReturnUrl == "/")
@@ -218,9 +232,72 @@
                 
                 RedirectManager.RedirectTo(ReturnUrl);
             }
+            else
+            {
+                // The external login is already associated with another account
+                message = "This external login is already associated with another account. Please use a different email or sign in with the existing account.";
+                return;
+            }
         }
+        else
+        {
+            // Create new user
+            var user = CreateUser();
 
-        message = $"Error: {string.Join(",", result.Errors.Select(error => error.Description))}";
+            await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+            await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+            
+            user.DisplayName = GetProviderUserName() ?? Input.Email;
+            
+            // Set profile picture URL from provider if available
+            user.ProfilePictureUrl = GetProviderProfilePictureUrl() ?? "";
+
+            var result = await UserManager.CreateAsync(user);
+            if (result.Succeeded)
+            {
+                var loginInfo = new UserLoginInfo(
+                    externalLoginInfo.LoginProvider,
+                    externalLoginInfo.ProviderKey,
+                    GetProviderDisplayName(externalLoginInfo.LoginProvider));
+                result = await UserManager.AddLoginAsync(user, loginInfo);
+                if (result.Succeeded)
+                {
+                    Logger.LogInformation("User created an account using {Name} provider.", externalLoginInfo.LoginProvider);
+
+                    var userId = await UserManager.GetUserIdAsync(user);
+                    var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+                    var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+                        NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+                        new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
+                    await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
+
+                    // If account confirmation is required, we need to show the link if we don't have a real email sender
+                    if (UserManager.Options.SignIn.RequireConfirmedAccount)
+                    {
+                        RedirectManager.RedirectTo("Account/RegisterConfirmation", new() { ["email"] = Input.Email });
+                    }
+
+                    await SignInManager.SignInAsync(user, isPersistent: false, externalLoginInfo.LoginProvider);
+                    
+                    // Check if we should redirect to the client URL instead of the return URL
+                    if (string.IsNullOrEmpty(ReturnUrl) || ReturnUrl == "/")
+                    {
+                        var clientUrl = Configuration["AppSettings:ClientUrl"] + Configuration["AppSettings:ClientAfterLoginPath"];
+                        if (!string.IsNullOrEmpty(clientUrl))
+                        {
+                            NavigationManager.NavigateTo(clientUrl, forceLoad: true);
+                            return;
+                        }
+                    }
+                    
+                    RedirectManager.RedirectTo(ReturnUrl);
+                }
+            }
+
+            message = $"Error: {string.Join(",", result.Errors.Select(error => error.Description))}";
+        }
     }
 
     private static ApplicationUser CreateUser()
@@ -241,31 +318,75 @@
         "google" => Icons.Custom.Brands.Google,
         "microsoft" => Icons.Custom.Brands.Microsoft,
         "github" => Icons.Custom.Brands.GitHub,
+        "discord" => Icons.Custom.Brands.Discord,
         "facebook" => Icons.Custom.Brands.Facebook,
         "twitter" => Icons.Custom.Brands.Twitter,
         _ => Icons.Material.Filled.Login
     };
 
-    private string? GetGoogleProfilePictureUrl()
+    private string? GetProviderProfilePictureUrl()
     {
-        // Google provides the picture in a standard claim
-        var pictureClaim = externalLoginInfo.Principal.FindFirst("picture") ??
-                           externalLoginInfo.Principal.FindFirst("urn:google:picture") ??
-                           externalLoginInfo.Principal.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/uri") ??
-                           externalLoginInfo.Principal.FindFirst("image") ??
-                           externalLoginInfo.Principal.FindFirst("avatar");
+        var provider = externalLoginInfo.LoginProvider.ToLower();
         
-        if (pictureClaim != null)
+        // Handle different providers
+        if (provider == "google")
         {
-            // Some Google APIs append size parameters - we can add our own size parameter to get a larger image
-            string pictureUrl = pictureClaim.Value;
-            if (pictureUrl.Contains("googleusercontent.com") && !pictureUrl.Contains("=s"))
+            var pictureClaim = externalLoginInfo.Principal.FindFirst("picture");
+            if (pictureClaim != null)
             {
-                // Add size parameter for Google profile pictures (s200-c for 200px circle)
-                pictureUrl += pictureUrl.Contains("?") ? "&" : "?";
-                pictureUrl += "s200-c";
+                string pictureUrl = pictureClaim.Value;
+                if (pictureUrl.Contains("googleusercontent.com") && !pictureUrl.Contains("=s"))
+                {
+                    // Add size parameter for Google profile pictures (s200-c for 200px circle)
+                    pictureUrl += pictureUrl.Contains("?") ? "&" : "?";
+                    pictureUrl += "s200-c";
+                }
+                return pictureUrl;
             }
-            return pictureUrl;
+        }
+        else if (provider == "github")
+        {
+            var pictureClaim = externalLoginInfo.Principal.FindFirst("picture") ??
+                              externalLoginInfo.Principal.FindFirst("avatar_url");
+            if (pictureClaim != null)
+            {
+                string pictureUrl = pictureClaim.Value;
+                // GitHub avatars can be sized by adding ?size=200
+                if (!pictureUrl.Contains("size="))
+                {
+                    pictureUrl += pictureUrl.Contains("?") ? "&" : "?";
+                    pictureUrl += "size=200";
+                }
+                return pictureUrl;
+            }
+        }
+        else if (provider == "discord")
+        {
+            var pictureClaim = externalLoginInfo.Principal.FindFirst("picture") ??
+                              externalLoginInfo.Principal.FindFirst("avatar");
+            if (pictureClaim != null)
+            {
+                string pictureUrl = pictureClaim.Value;
+                // Discord avatars need to be constructed with user ID and avatar hash
+                var userId = externalLoginInfo.Principal.FindFirstValue("sub") ??
+                            externalLoginInfo.Principal.FindFirstValue("id");
+                if (!string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(pictureUrl))
+                {
+                    return $"https://cdn.discordapp.com/avatars/{userId}/{pictureUrl}.png?size=200";
+                }
+                return pictureUrl;
+            }
+        }
+        
+        // Generic fallback - look for any picture/avatar claim
+        var genericPictureClaim = externalLoginInfo.Principal.FindFirst("picture") ??
+                                 externalLoginInfo.Principal.FindFirst("avatar_url") ??
+                                 externalLoginInfo.Principal.FindFirst("avatar") ??
+                                 externalLoginInfo.Principal.FindFirst("image");
+        
+        if (genericPictureClaim != null && Uri.IsWellFormedUriString(genericPictureClaim.Value, UriKind.Absolute))
+        {
+            return genericPictureClaim.Value;
         }
         
         // Log all available claims to help debugging
@@ -273,16 +394,6 @@
         foreach (var claim in externalLoginInfo.Principal.Claims)
         {
             Logger.LogInformation("Claim: {Type} = {Value}", claim.Type, claim.Value);
-            
-            // Additional check for any claim that might contain picture or image in its type
-            if ((claim.Type.Contains("picture", StringComparison.OrdinalIgnoreCase) ||
-                 claim.Type.Contains("image", StringComparison.OrdinalIgnoreCase) ||
-                 claim.Type.Contains("avatar", StringComparison.OrdinalIgnoreCase) ||
-                 claim.Type.Contains("photo", StringComparison.OrdinalIgnoreCase)) &&
-                Uri.IsWellFormedUriString(claim.Value, UriKind.Absolute))
-            {
-                return claim.Value;
-            }
         }
         
         // If we couldn't find a picture claim, try to create one from the email (using Gravatar)
@@ -295,16 +406,39 @@
         return null;
     }
 
-    private string? GetGoogleUserName()
+    private string? GetProviderUserName()
     {
-        // Google provides the name in a standard claim
-        var nameClaim = externalLoginInfo.Principal.FindFirst(ClaimTypes.Name) ??
-                        externalLoginInfo.Principal.FindFirst("urn:google:name") ??
-                        externalLoginInfo.Principal.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name") ??
-                        externalLoginInfo.Principal.FindFirst("name") ??
-                        externalLoginInfo.Principal.FindFirst("nickname");
-
-        return nameClaim?.Value;
+        var provider = externalLoginInfo.LoginProvider.ToLower();
+        
+        // Handle different providers
+        if (provider == "google")
+        {
+            var nameClaim = externalLoginInfo.Principal.FindFirst(ClaimTypes.Name) ??
+                            externalLoginInfo.Principal.FindFirst("name");
+            return nameClaim?.Value;
+        }
+        else if (provider == "github")
+        {
+            var nameClaim = externalLoginInfo.Principal.FindFirst(ClaimTypes.Name) ??
+                            externalLoginInfo.Principal.FindFirst("login") ??
+                            externalLoginInfo.Principal.FindFirst("name");
+            return nameClaim?.Value;
+        }
+        else if (provider == "discord")
+        {
+            var nameClaim = externalLoginInfo.Principal.FindFirst(ClaimTypes.Name) ??
+                            externalLoginInfo.Principal.FindFirst("username") ??
+                            externalLoginInfo.Principal.FindFirst("global_name");
+            return nameClaim?.Value;
+        }
+        
+        // Generic fallback
+        var genericNameClaim = externalLoginInfo.Principal.FindFirst(ClaimTypes.Name) ??
+                              externalLoginInfo.Principal.FindFirst("name") ??
+                              externalLoginInfo.Principal.FindFirst("login") ??
+                              externalLoginInfo.Principal.FindFirst("username");
+        
+        return genericNameClaim?.Value;
     }
 
     // Helper method to generate an MD5 hash for Gravatar
@@ -333,6 +467,17 @@
 
         return (IUserEmailStore<ApplicationUser>)UserStore;
     }
+
+    private string GetProviderDisplayName(string providerName) => providerName.ToLower() switch
+    {
+        "google" => "Google",
+        "github" => "GitHub",
+        "discord" => "Discord",
+        "microsoft" => "Microsoft",
+        "facebook" => "Facebook",
+        "twitter" => "Twitter",
+        _ => providerName
+    };
 
     private sealed class InputModel
     {

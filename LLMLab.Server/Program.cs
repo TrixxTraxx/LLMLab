@@ -16,6 +16,10 @@ using LLMLab.Server.Service;
 using LLMLab.Server.Service.Models;
 using LLMLab.Server.SignalR;
 using LLMLab.ServiceDefaults;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using System.Security.Claims;
+using System.Net.Http.Json;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -95,6 +99,74 @@ builder.Services.AddAuthentication(options =>
         
         googleOptions.ClaimActions.MapJsonKey("picture", "picture", "url");
     })
+    .AddOAuth("GitHub", githubOptions =>
+    {
+        githubOptions.ClientId = builder.Configuration["Authentication:GitHub:ClientId"];
+        githubOptions.ClientSecret = builder.Configuration["Authentication:GitHub:ClientSecret"];
+        githubOptions.CallbackPath = "/signin-github";
+        
+        githubOptions.AuthorizationEndpoint = "https://github.com/login/oauth/authorize";
+        githubOptions.TokenEndpoint = "https://github.com/login/oauth/access_token";
+        githubOptions.UserInformationEndpoint = "https://api.github.com/user";
+        
+        githubOptions.Scope.Add("user:email");
+        githubOptions.Scope.Add("read:user");
+        
+        githubOptions.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "id");
+        githubOptions.ClaimActions.MapJsonKey(ClaimTypes.Name, "login");
+        githubOptions.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
+        githubOptions.ClaimActions.MapJsonKey("picture", "avatar_url");
+        
+        githubOptions.Events = new OAuthEvents
+        {
+            OnCreatingTicket = async context =>
+            {
+                var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
+                request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", context.AccessToken);
+                
+                var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
+                response.EnsureSuccessStatusCode();
+                
+                var user = await response.Content.ReadFromJsonAsync<JsonElement>(context.HttpContext.RequestAborted);
+                context.RunClaimActions(user);
+            }
+        };
+    })
+    .AddOAuth("Discord", discordOptions =>
+    {
+        discordOptions.ClientId = builder.Configuration["Authentication:Discord:ClientId"];
+        discordOptions.ClientSecret = builder.Configuration["Authentication:Discord:ClientSecret"];
+        discordOptions.CallbackPath = "/signin-discord";
+        
+        discordOptions.AuthorizationEndpoint = "https://discord.com/api/oauth2/authorize";
+        discordOptions.TokenEndpoint = "https://discord.com/api/oauth2/token";
+        discordOptions.UserInformationEndpoint = "https://discord.com/api/users/@me";
+        
+        discordOptions.Scope.Add("identify");
+        discordOptions.Scope.Add("email");
+        
+        discordOptions.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "id");
+        discordOptions.ClaimActions.MapJsonKey(ClaimTypes.Name, "username");
+        discordOptions.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
+        discordOptions.ClaimActions.MapJsonKey("picture", "avatar");
+        
+        discordOptions.Events = new OAuthEvents
+        {
+            OnCreatingTicket = async context =>
+            {
+                var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
+                request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", context.AccessToken);
+                
+                var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
+                response.EnsureSuccessStatusCode();
+                
+                var user = await response.Content.ReadFromJsonAsync<JsonElement>(context.HttpContext.RequestAborted);
+                context.RunClaimActions(user);
+            }
+        };
+    })
     .AddIdentityCookies(options =>
     {
         //set cookie expiration to 365 days
@@ -123,6 +195,19 @@ builder.Services.AddAuthentication(options =>
             cookie.Cookie.Name = "T3.Clone.AuthCookie";
         });
     });
+
+// Configure authentication scheme display names
+builder.Services.Configure<AuthenticationOptions>(options =>
+{
+    if (options.SchemeMap.ContainsKey("GitHub"))
+    {
+        options.SchemeMap["GitHub"].DisplayName = "GitHub";
+    }
+    if (options.SchemeMap.ContainsKey("Discord"))
+    {
+        options.SchemeMap["Discord"].DisplayName = "Discord";
+    }
+});
 
 // var connectionString = "";
 // builder.AddSqlServerDbContext<ApplicationDbContext>(connectionName: "t3CloneDb", settings =>
