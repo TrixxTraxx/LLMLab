@@ -5,7 +5,7 @@
 
 <form action="Account/Logout" method="post">
     <AntiforgeryToken />
-    <input type="hidden" name="ReturnUrl" value="~/chat" />
+    <input type="hidden" name="ReturnUrl" value="PostLogoutRedirect" />
     <button type="submit" class="nav-link" id="logoutButton">
         <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
     </button>
