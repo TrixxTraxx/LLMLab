@@ -13,7 +13,7 @@ public class GoogleChat(
 ) : IChatModel
 {
     public async Task<ChatModelResponse> GenerateResponse(DataMessage entity, List<DataMessage> messagesChain, AiModel config,
-        Action<string> tokenCallback, Action<string> thinkingTokenCallback, Action<string> errorCallback)
+        Action<string> tokenCallback, Action<string> thinkingTokenCallback, Action<string> errorCallback, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -87,7 +87,7 @@ public class GoogleChat(
             }
 
             // Generate response using text approach (will implement proper content parts later)
-            await foreach (var chunk in model.GenerateContentStream(parts, generationConfig))
+            await foreach (var chunk in model.GenerateContentStream(parts, generationConfig, cancellationToken: cancellationToken))
             {
                 if (!string.IsNullOrEmpty(chunk.Text))
                 {

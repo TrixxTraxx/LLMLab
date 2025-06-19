@@ -1,4 +1,5 @@
 using Hangfire;
+using LLMLab.Dtos.Messages;
 using LLMLab.Server.Data;
 using LLMLab.Server.Jobs;
 using LLMLab.Server.Mappers;
@@ -23,71 +24,65 @@ public class AiGenerationService(
         BackgroundJob.Enqueue<GenerateThreadTitleJob>(x => x.GenerateThreadTitleAsync(threadId, newMessageText));
     }
 
-    public async Task StopGeneration(int messageId, bool cancelJob = false)
+    public async Task StopGeneration(int messageId)
     {
-        var message = await dbContext.Messages
-            .Include(x => x.Attachments)
-            .FirstOrDefaultAsync(x => x.Id == messageId);
-        if (message == null)
+        var jobInfo = GenerateMessageJob.RunningJobs.GetValueOrDefault(messageId);
+
+        if (jobInfo == null)
         {
-            throw new ArgumentException("Message not found", nameof(messageId));
-        }
-
-
-
-        //TODO: properly cancel the Jobs
-        /*if (cancelJob)
-        {
-            //cancel any ongoing background job for this message
-            var jobId = message.GenerationJobId;
-            if (!string.IsNullOrEmpty(jobId))
+            var message = await dbContext.Messages
+                .Include(x => x.Attachments)
+                .FirstOrDefaultAsync(x => x.Id == messageId);
+            if (message == null)
             {
-                BackgroundJob.Delete(jobId);
+                throw new ArgumentException("Message not found", nameof(messageId));
             }
-        }
-        else*/
-        {
-            // Mark the message as complete
+            
             message.Complete = true;
             await dbContext.SaveChangesAsync();
 
             // Notify clients that the generation has stopped
-            await hubContext.Clients.Group(messageId.ToString()).SendAsync("GenerationStopped", MessageMapper.Map(message));
+            await SendStopMessage(messageId, MessageMapper.Map(message));
+        }
+        else
+        {
+            // cancel the job
+            GenerateMessageJob.CancelJob(messageId);
+
+            // Notify clients that the generation has stopped
+            await SendStopMessage(messageId, MessageMapper.Map(jobInfo.Message));
         }
     }
 
-    public async Task AddTokenToGeneration(int messageId, string token, bool isThinkingToken)
+    public async Task SendStopMessage(int messageId, MessageDto messageDto)
     {
-        var message = await dbContext.Messages.FindAsync(messageId);
-        if (message == null)
-        {
-            throw new ArgumentException("Message not found", nameof(messageId));
-        }
-        message.ModelResponse += token;
-        await dbContext.SaveChangesAsync();
-        SendNewToken(messageId, token, isThinkingToken);
+        await hubContext.Clients.Group(messageId.ToString()).SendAsync("GenerationStopped", messageDto);
     }
+
 
     public async Task SendExistingMessage(ApplicationUser user, int messageId, HubCallerContext context)
     {
-        var message = await dbContext.Messages
-            .Include(x => x.Attachments)
-            .FirstOrDefaultAsync(x => x.Id == messageId && x.Thread.UserId == user.Id);
-        if (message == null)
-        { 
-            throw new ArgumentException("Message with Id not found", nameof(messageId));
-        }
-        
-        
-        if (message.Complete || message.CreatedAt.AddMinutes(5) < DateTime.UtcNow)
+        try
         {
-            // If the message is complete, notify the client
-            await StopGeneration(messageId);
-            return;
+            var jobInfo = GenerateMessageJob.RunningJobs.GetValueOrDefault(messageId);
+
+            if (jobInfo == null)
+            {
+                // If the message is complete, notify the client
+                await StopGeneration(messageId);
+                return;
+            }
+            else
+            {
+                // Send the existing message to the client
+                await hubContext.Clients.Client(context.ConnectionId)
+                    .SendAsync("NewMessage", MessageMapper.Map(jobInfo.Message));
+            }
         }
-        
-        // Send the existing message to the client
-        await hubContext.Clients.Client(context.ConnectionId).SendAsync("NewMessage", MessageMapper.Map(message));
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
     }
     
     public void SendNewToken(int messageId, string token, bool isThinkingToken)
