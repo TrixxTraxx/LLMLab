@@ -22,7 +22,7 @@ Here is a complete list of the application's features:
 *   **Message Threads**: Create, manage, and branch conversations.
 *   **Chat Branching**: Easily create alternative message histories within threads and even across different threads.
 *   **Message Editing**: Edit your messages after they have been sent.
-*   **Attachments**: Full support for uploading and attaching files to your messages.
+*   **Attachments**: Full support for uploading and attaching files to your messages, including pasting attachments directly from your clipboard and drag-and-drop support.
 *   **Rich Formatting**: Automatic syntax highlighting for Markdown, LaTeX, and a wide variety of programming languages in code blocks.
 
 #### 🔄 Syncing & Performance

@@ -14,7 +14,7 @@ public class OpenAiReasoningChat(
 ) : IChatModel
 {
         public async Task<ChatModelResponse> GenerateResponse(Message entity, List<Message> messagesChain, AiModel config,
-        Action<string> tokenCallback, Action<string> thinkingTokenCallback, Action<string> errorCallback)
+        Action<string> tokenCallback, Action<string> thinkingTokenCallback, Action<string> errorCallback, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -22,7 +22,7 @@ public class OpenAiReasoningChat(
             {
                 return await new OpenAiChat(dbContext, attachmentService, keyService, systemPromptService)
                     .GenerateResponse(entity, messagesChain, config, tokenCallback, thinkingTokenCallback,
-                        errorCallback);
+                        errorCallback, cancellationToken);
             }
 
             var apiKey = keyService.ResolveKey(entity.Thread.UserId, config.ApiKey);
@@ -41,6 +41,9 @@ public class OpenAiReasoningChat(
             messagesChain.Reverse();
             foreach (var message in messagesChain)
             {
+                // Check for cancellation during message preparation
+                cancellationToken.ThrowIfCancellationRequested();
+                
                 var userContentParts = new ResponseContentPart[]
                 {
                     ResponseContentPart.CreateInputTextPart(message.Text)
@@ -71,6 +74,9 @@ public class OpenAiReasoningChat(
                 }
             }
 
+            // Check for cancellation before starting generation
+            cancellationToken.ThrowIfCancellationRequested();
+
             //generate streaming response
             var response = client.CreateResponseStreamingAsync(messages, new ResponseCreationOptions()
             {
@@ -90,6 +96,9 @@ public class OpenAiReasoningChat(
             //process the response
             await foreach (var update in response)
             {
+                // Check for cancellation during each update
+                cancellationToken.ThrowIfCancellationRequested();
+                
                 if (update is StreamingResponseInProgressUpdate inProgressUpdate)
                 {
                     //Console.WriteLine($"[Reasoning] In Progress: {inProgressUpdate.Response.OutputItems}");
@@ -162,6 +171,11 @@ public class OpenAiReasoningChat(
                 ModelProvider = "OpenAI",
                 ModelId = config.ModelId
             };
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine($"OpenAI Reasoning Chat generation for message {entity.Id} was cancelled");
+            throw; // Re-throw to be handled by the calling code
         }
         catch (Exception ex)
         {

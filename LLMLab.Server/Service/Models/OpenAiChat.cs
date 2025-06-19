@@ -13,7 +13,7 @@ public class OpenAiChat(
 ) : IChatModel
 {
     public async Task<ChatModelResponse> GenerateResponse(Message entity, List<Message> messagesChain, AiModel config,
-        Action<string> tokenCallback, Action<string> thinkingTokenCallback, Action<string> errorCallback)
+        Action<string> tokenCallback, Action<string> thinkingTokenCallback, Action<string> errorCallback, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -65,7 +65,7 @@ public class OpenAiChat(
             {
                 //TODO: set other options like temperature, max tokens, etc.
                 
-            }, CancellationToken.None);
+            }, cancellationToken);
 
             var inputTokens = 0;
             var outputTokens = 0;

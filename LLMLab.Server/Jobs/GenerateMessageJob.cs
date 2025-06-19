@@ -3,8 +3,17 @@ using LLMLab.Server.Data;
 using LLMLab.Server.Service;
 using LLMLab.Server.Service.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Concurrent;
+using LLMLab.Server.Mappers;
 
 namespace LLMLab.Server.Jobs;
+
+public class RunningJobInfo
+{
+    public Message Message { get; set; } = null!;
+    public CancellationTokenSource CancellationTokenSource { get; set; } = null!;
+    public DateTime StartedAt { get; set; } = DateTime.UtcNow;
+}
 
 [AutomaticRetry(Attempts = 0)]
 public class GenerateMessageJob(
@@ -13,9 +22,30 @@ public class GenerateMessageJob(
     ChatModelProvider chatModelProvider
 )
 {
+    // Static dictionary to track currently running jobs by message ID
+    private static readonly ConcurrentDictionary<int, RunningJobInfo> _runningJobs = new();
+
+    // Public property to access running jobs from anywhere
+    public static IReadOnlyDictionary<int, RunningJobInfo> RunningJobs => _runningJobs;
+    
+    private SemaphoreSlim _semaphore = new(1, 1);
+
+    // Method to cancel a specific job by message ID
+    public static bool CancelJob(int messageId)
+    {
+        if (_runningJobs.TryGetValue(messageId, out var jobInfo))
+        {
+            jobInfo.CancellationTokenSource.Cancel();
+            return true;
+        }
+        return false;
+    }
+
     public async Task GenerateMessageAsync(int messageId) 
     {
         Message? message = null;
+        CancellationTokenSource cancellationTokenSource = new();
+        
         try
         {
             message = await dbContext.Messages
@@ -31,8 +61,23 @@ public class GenerateMessageJob(
                 return;
             }
 
+            // Register this job in the running jobs dictionary
+            var jobInfo = new RunningJobInfo
+            {
+                Message = message,
+                CancellationTokenSource = cancellationTokenSource
+            };
+            _runningJobs.TryAdd(messageId, jobInfo);
+
+            // Check for cancellation before proceeding
+            cancellationTokenSource.Token.Register(() =>
+            {
+                message.Complete = true;
+                SaveChangesLocked();
+            });
+
             message.ModelResponse = string.Empty;
-            await dbContext.SaveChangesAsync();
+            await SaveChangesLockedAsync();
             
             var messageChain = GetMessageChain(message);
             
@@ -58,37 +103,55 @@ public class GenerateMessageJob(
                     message.Complete = true;
                     message.Error = true;
                     message.ErrorMessage = error;
-                    dbContext.SaveChanges();
+                    SaveChangesLocked();
                     Task.Run(async () => {
                         try
                         {
-                            await aiGenerationService.StopGeneration(messageId);
+                            await StopGeneration(message);
                         }
                         catch (Exception ex)
                         {
                             Console.WriteLine($"Failed to send error notification for message {messageId}: {ex.Message}");
                         }
                     });
-                }
+                },
+                cancellationTokenSource.Token
             );
             
-            await Task.Delay(50);
             // Mark message as complete
             message.Complete = true;
-            await dbContext.SaveChangesAsync();
+            await SaveChangesLockedAsync();
             
             await SaveResultAsync(messageId, result);
             
             // Only stop generation if there were no errors
-            if (result != null && !result.IsError)
-            {
-                await aiGenerationService.StopGeneration(messageId);
-            }
-            else
+            if (result == null || result.IsError)
             {
                 // Handle error case
                 Console.WriteLine($"Message generation failed for message {messageId}: {result?.ErrorMessage}");
-                await aiGenerationService.StopGeneration(messageId);
+            }
+
+            await StopGeneration(message);
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine($"Generation job for message {messageId} was cancelled");
+            
+            // Mark message as cancelled
+            if (message != null)
+            {
+                try
+                {
+                    message.Complete = true;
+                    message.Error = true;
+                    message.ErrorMessage = "Generation was cancelled";
+                    await SaveChangesLockedAsync();
+                    await StopGeneration(message);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to save cancellation state for message {messageId}: {ex.Message}");
+                }
             }
         }
         catch (Exception ex)
@@ -101,22 +164,38 @@ public class GenerateMessageJob(
             {
                 message!.Complete = true;
                 message.ModelResponse = $"Error: {ex.Message}";
-                await dbContext.SaveChangesAsync();
+                await SaveChangesLockedAsync();
             }
             catch (Exception saveEx)
             {
-                Console.WriteLine($"Failed to save error state for message {messageId}: {saveEx.Message}");
+                Console.WriteLine($"Failed to save error state for message {messageId}:");
+                Console.WriteLine(saveEx);
             }
             
             try
             {
-                await aiGenerationService.StopGeneration(message!.Id);
+                await StopGeneration(message);
             }
             catch (Exception notifyEx)
             {
                 Console.WriteLine($"Failed to send error notification for message {messageId}: {notifyEx.Message}");
             }
         }
+        finally
+        {
+            // Always remove the job from the running jobs dictionary
+            _runningJobs.TryRemove(messageId, out _);
+            
+            // Dispose the cancellation token source
+            cancellationTokenSource?.Dispose();
+        }
+    }
+
+    private async Task StopGeneration(Message message)
+    {
+        message.Complete = true;
+        await SaveChangesLockedAsync();
+        await aiGenerationService.SendStopMessage(message.Id, MessageMapper.Map(message));
     }
 
     private DateTime lastSaveTime = DateTime.MinValue;
@@ -129,8 +208,42 @@ public class GenerateMessageJob(
             return;
         }
         
-        lastSaveTime = now; 
-        dbContext.SaveChanges();
+        lastSaveTime = now;
+        SaveChangesLocked();
+    }
+
+    public void SaveChangesLocked()
+    {
+        _semaphore.Wait();
+        try
+        {
+            dbContext.SaveChanges();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving changes: {ex.Message}");
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    public async Task SaveChangesLockedAsync()
+    {
+        await _semaphore.WaitAsync();
+        try
+        {
+            await dbContext.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving changes: {ex.Message}");
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
     private async Task SaveResultAsync(int messageId, ChatModelResponse? result)
@@ -166,8 +279,8 @@ public class GenerateMessageJob(
             {
                 Console.WriteLine($"Message {messageId} generation error: {result.ErrorMessage}");
             }
-
-            await dbContext.SaveChangesAsync();
+            
+            await SaveChangesLockedAsync();
         }
         catch (Exception ex)
         {

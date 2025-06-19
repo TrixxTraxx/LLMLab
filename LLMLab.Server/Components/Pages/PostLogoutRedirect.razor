@@ -1,0 +1,20 @@
+@page "/PostLogoutRedirect"
+@inject IConfiguration Configuration
+@inject NavigationManager NavigationManager
+
+<div>Redirecting...</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        var clientUrl = Configuration["AppSettings:ClientUrl"];
+        if (!string.IsNullOrEmpty(clientUrl))
+        {
+            NavigationManager.NavigateTo($"{clientUrl}/chat", true);
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/", true);
+        }
+    }
+} 

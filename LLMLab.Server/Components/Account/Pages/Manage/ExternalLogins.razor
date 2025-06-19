@@ -132,7 +132,11 @@
             RedirectManager.RedirectToCurrentPageWithStatus("Error: Could not load external login info.", HttpContext);
         }
 
-        var result = await UserManager.AddLoginAsync(user, info);
+        var loginInfo = new UserLoginInfo(
+            info.LoginProvider,
+            info.ProviderKey,
+            GetProviderDisplayName(info.LoginProvider));
+        var result = await UserManager.AddLoginAsync(user, loginInfo);
         if (!result.Succeeded)
         {
             RedirectManager.RedirectToCurrentPageWithStatus("Error: The external login was not added. External logins can only be associated with one account.", HttpContext);
@@ -149,8 +153,20 @@
         "google" => Icons.Custom.Brands.Google,
         "microsoft" => Icons.Custom.Brands.Microsoft,
         "github" => Icons.Custom.Brands.GitHub,
+        "discord" => Icons.Custom.Brands.Discord,
         "facebook" => Icons.Custom.Brands.Facebook,
         "twitter" => Icons.Custom.Brands.Twitter,
         _ => Icons.Material.Filled.Login
+    };
+
+    private string GetProviderDisplayName(string providerName) => providerName.ToLower() switch
+    {
+        "google" => "Google",
+        "github" => "GitHub",
+        "discord" => "Discord",
+        "microsoft" => "Microsoft",
+        "facebook" => "Facebook",
+        "twitter" => "Twitter",
+        _ => providerName
     };
 }

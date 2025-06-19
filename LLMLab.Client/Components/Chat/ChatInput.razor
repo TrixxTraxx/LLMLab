@@ -223,7 +223,9 @@
 
     @if (ShowScrollToBottomButton)
     {
-        <button class="scroll-to-bottom-btn-in-input" title="Scroll to bottom" @onclick="() => OnScrollToBottom.InvokeAsync()">
+        <button class="scroll-to-bottom-btn-in-input @(rippleActive ? "ripple-active" : "")"
+                title="Scroll to bottom"
+                @onclick="ScrollToBottom">
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
                 <circle cx="14" cy="14" r="13" fill="rgba(32,32,32,0.75)" />
                 <path d="M9 13l5 5 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -231,6 +233,7 @@
             </svg>
         </button>
     }
+
 </div>
 
 <!-- Hidden file input -->
@@ -261,6 +264,7 @@
     private bool showModelModal = false;
     private bool showReasoningModal = false;
     private bool isStoppingGeneration = false;
+    private bool rippleActive;
 
     private MessageDto message = new MessageDto();
     public ElementReference TextareaRef;
@@ -847,6 +851,20 @@
             isStoppingGeneration = false;
             StateHasChanged();
         }
+    }
+    
+    private async Task ScrollToBottom()
+    {
+        rippleActive = false;
+        StateHasChanged();
+        rippleActive = true;
+        StateHasChanged();
+        await Task.Delay(100);
+        rippleActive = false;
+        StateHasChanged();
+
+        if (OnScrollToBottom.HasDelegate)
+            await OnScrollToBottom.InvokeAsync();
     }
 
     public void Dispose()

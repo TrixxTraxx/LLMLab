@@ -98,8 +98,9 @@ public class GenerationService : IAsyncDisposable
             _currentMessageCache.Message = message;
             _currentMessageCache.LastUpdated = DateTime.UtcNow;
             _currentMessageCache.OnUpdated?.Invoke();
+            tokenCache = "";
             _messageService.UpdateMessageCache(_currentMessageCache);
-            
+
             // Clean up static references
             _activeGenerations.Remove(generation);
             
@@ -140,7 +141,7 @@ public class GenerationService : IAsyncDisposable
             tokenCache = token;
             _ = Task.Run(async () =>
             {
-                await Task.Delay(16); // 60 times per second max
+                //await Task.Delay(16); // 60 times per second max
                 if (!string.IsNullOrEmpty(tokenCache))
                 {
                     _currentMessageCache.Message.ModelResponse += tokenCache;

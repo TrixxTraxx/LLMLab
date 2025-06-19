@@ -38,6 +38,4 @@ public class Message
     
     public int? PreviousMessageId { get; set; } = null;
     public Message? PreviousMessage { get; set; }
-    
-    public string GenerationJobId { get; set; } = string.Empty;
 }
