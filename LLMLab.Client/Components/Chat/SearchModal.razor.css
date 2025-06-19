@@ -47,17 +47,17 @@
     align-items: center;
     justify-content: space-between;
     padding: 20px 24px;
-    border-bottom: 1px solid color-mix(in srgb, var(--mud-palette-primary) 8%, transparent);
-    background: color-mix(in srgb, var(--mud-palette-surface) 80%, var(--mud-palette-background-grey) 20%);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid color-mix(in srgb, var(--mud-palette-primary) 15%, transparent);
+    background: var(--mud-palette-surface);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .modal-title {
     margin: 0;
     font-size: 20px;
     font-weight: 600;
-    color: var(--mud-palette-text-primary);
+    color: var(--mud-palette-primary);
 }
 
 .modal-close-btn {
@@ -65,7 +65,7 @@
     border: none;
     padding: 8px;
     cursor: pointer;
-    color: var(--mud-palette-text-secondary);
+    color: var(--mud-palette-primary);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -74,8 +74,8 @@
 }
 
 .modal-close-btn:hover {
-    background: color-mix(in srgb, var(--mud-palette-text-secondary) 10%, transparent);
-    color: var(--mud-palette-text-primary);
+    background: color-mix(in srgb, var(--mud-palette-primary) 15%, transparent);
+    color: var(--mud-palette-primary);
 }
 
 .modal-close-btn svg {
@@ -126,6 +126,8 @@
     font-size: 16px;
     color: var(--mud-palette-text-primary);
     outline: none;
+    autocomplete: off;
+    data-form-type: none;
 }
 
 .search-input::placeholder {

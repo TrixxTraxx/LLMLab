@@ -30,6 +30,11 @@
                     @oninput="OnSearchInput"
                     @onkeydown="HandleInputKeyDown"
                     @ref="searchInputRef"
+                    autocomplete="off"
+                    spellcheck="false"
+                    data-form-type="other"
+                    role="searchbox"
+                    aria-label="Search chats"
                 />
             </div>
             
@@ -50,9 +55,20 @@
                         <div class="search-result-item @(selectedResultIndex == index ? "selected" : "")" 
                              @onclick="() => NavigateToThread(result.Thread.Id)">
                             <div class="result-icon">
-                                <svg viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
-                                </svg>
+                                @if (result.Thread.BranchFromThreadId.HasValue)
+                                {
+                                    <!-- Branch icon for branched threads -->
+                                    <svg viewBox="131 -131 512 512" fill="currentColor">
+                                        <path d="M569.9,15.3c0-40.9-32.2-73.1-73.1-73.1s-73.1,32.2-73.1,73.1c0,26.7,14.9,50.3,36.2,62.9v11   c-0.8,18.9-8.7,35.4-22.8,50.3c-14.9,14.9-31.5,22-50.3,22.8c-30.7,0.8-54.3,5.5-73.1,16.5V5.1c21.2-12.6,36.2-35.4,36.2-62.9   c0-40.9-32.2-73.1-73.1-73.1s-72.7,32.1-72.7,73c0,26.7,14.9,50.3,36.2,62.9v239.9c-21.2,12.6-36.2,36.2-36.2,62.9   c0,40.9,32.2,73.1,73.1,73.1s73.1-32.2,73.1-73.1c0-19.7-7.1-36.2-19.7-49.5c3.1-2.4,17.3-14.9,21.2-17.3   c9.4-3.9,20.4-6.3,34.6-6.3c38.5-1.6,71.6-16.5,100.7-45.6c29.1-29.1,44-72.4,45.6-110.1h-0.8C554.9,64.8,569.9,42,569.9,15.3z    M278.1-101.9c24.4,0,44,20.4,44,44s-20.4,44-44,44s-44-20.4-44-44S254.5-101.9,278.1-101.9z M278.1,351.1c-24.4,0-44-20.4-44-44   s20.4-44,44-44s44,20.4,44,44C321.3,331.5,301.7,351.1,278.1,351.1z M496.7,59.3c-24.4,0-44-20.4-44-44s20.4-44,44-44   c23.6,0,44,20.4,44,44C540.8,38.9,520.3,59.3,496.7,59.3z"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <!-- Default chat icon -->
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+                                    </svg>
+                                }
                             </div>
                             <div class="result-content">
                                 <div class="result-title">@result.Thread.Title</div>
