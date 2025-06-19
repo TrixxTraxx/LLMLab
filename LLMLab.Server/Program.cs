@@ -108,10 +108,10 @@ builder.Services.AddAuthentication(options =>
         githubOptions.AuthorizationEndpoint = "https://github.com/login/oauth/authorize";
         githubOptions.TokenEndpoint = "https://github.com/login/oauth/access_token";
         githubOptions.UserInformationEndpoint = "https://api.github.com/user";
-        
-        githubOptions.Scope.Add("user:email");
+
         githubOptions.Scope.Add("read:user");
-        
+        githubOptions.Scope.Add("user:email");
+
         githubOptions.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "id");
         githubOptions.ClaimActions.MapJsonKey(ClaimTypes.Name, "login");
         githubOptions.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
@@ -233,7 +233,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services
     .AddIdentityCore<ApplicationUser>(options =>
     {
-        options.SignIn.RequireConfirmedAccount = false;
+        options.SignIn.RequireConfirmedAccount = true;
         options.SignIn.RequireConfirmedEmail = false;
     })
     .AddRoles<IdentityRole>()
