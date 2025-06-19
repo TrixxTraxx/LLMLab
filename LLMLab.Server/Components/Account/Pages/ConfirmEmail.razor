@@ -22,7 +22,7 @@
             @if (statusMessage?.Contains("Thank you") == true)
             {
                 <div class="login-welcome-title">
-                    <MudIcon Icon="Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" Class="mr-2"/>
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" Class="mr-2"/>
                     Email Confirmed Successfully
                 </div>
                 <div class="login-welcome-subtitle">
@@ -37,7 +37,7 @@
             else
             {
                 <div class="login-welcome-title">
-                    <MudIcon Icon="Icons.Material.Filled.Error" Color="Color.Error" Size="Size.Large" Class="mr-2"/>
+                    <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Size="Size.Large" Class="mr-2"/>
                     Email Confirmation Failed
                 </div>
                 <div class="login-welcome-subtitle">
@@ -45,7 +45,7 @@
                 </div>
                 
                 <div class="login-status-message">
-                    <MudIcon Icon="Icons.Material.Filled.Error" Size="Size.Small" Class="mr-2"/>
+                    <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Small" Class="mr-2"/>
                     @statusMessage
                 </div>
             }
