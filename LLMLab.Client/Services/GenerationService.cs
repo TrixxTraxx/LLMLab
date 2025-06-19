@@ -98,8 +98,9 @@ public class GenerationService : IAsyncDisposable
             _currentMessageCache.Message = message;
             _currentMessageCache.LastUpdated = DateTime.UtcNow;
             _currentMessageCache.OnUpdated?.Invoke();
+            tokenCache = "";
             _messageService.UpdateMessageCache(_currentMessageCache);
-            
+
             // Clean up static references
             _activeGenerations.Remove(generation);
             
