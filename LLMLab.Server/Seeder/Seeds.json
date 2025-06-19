@@ -218,7 +218,7 @@
       "IsDefault": false,
       "MaxInputTokens": 1000000,
       "MaxOutputTokens": 65000,
-      "SupportedContentTypes": "image/jpeg, image/png, image/webp",
+      "SupportedContentTypes": "image/jpeg, image/png, image/webp, application/pdf, text/plain",
       "ThinkingCost": 0
     },
     {
@@ -239,7 +239,7 @@
       "IsDefault": false,
       "MaxInputTokens": 1000000,
       "MaxOutputTokens": 65000,
-      "SupportedContentTypes": "image/jpeg, image/png, image/webp",
+      "SupportedContentTypes": "image/jpeg, image/png, image/webp, application/pdf, text/plain",
       "ThinkingCost": 3.5
     },
     {
@@ -260,7 +260,7 @@
       "IsDefault": false,
       "MaxInputTokens": 1000000,
       "MaxOutputTokens": 65000,
-      "SupportedContentTypes": "image/jpeg, image/png, image/webp",
+      "SupportedContentTypes": "image/jpeg, image/png, image/webp, application/pdf, text/plain",
       "ThinkingCost": 3.5
     },
     {
