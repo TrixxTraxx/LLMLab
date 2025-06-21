@@ -90,7 +90,7 @@ public class AnthropicChat(
                 },
                 MaxTokens = config.MaxOutputTokens > 0 ? config.MaxOutputTokens : 8000,
                 Model = config.ModelId, // Should be claude-3-7-sonnet-20250101 or similar for thinking
-                Stream = true,
+                Stream = true
             };
             
             var isThinkingContent = entity.ReasoningEffortLevel != ReasoningEffortLevel.None;
@@ -114,6 +114,7 @@ public class AnthropicChat(
             var response = client.Messages.StreamClaudeMessageAsync(parameters, cancellationToken);
 
             var inputTokens = 0;
+            var thinkingTokens = 0;
             var outputTokens = 0;
             
             await foreach (var res in response)
@@ -160,6 +161,8 @@ public class AnthropicChat(
                 if (res.Usage != null)
                 {
                     inputTokens = res.Usage.InputTokens;
+                    // No information from Anthropic based APIs about thinking tokens
+                    thinkingTokens = 0;
                     outputTokens = res.Usage.OutputTokens;
                 }
             }
@@ -172,12 +175,8 @@ public class AnthropicChat(
             {
                 InputTokens = inputTokens,
                 OutputTokens = outputTokens,
-                Response = entity.ModelResponse,
                 IsError = false,
-                ModelName = config.Name,
-                ModelVersion = config.ModelId,
-                ModelProvider = "Anthropic",
-                ModelId = config.ModelId
+                ThinkingTokens = thinkingTokens,
             };
         }
         catch (Exception ex)
@@ -189,9 +188,6 @@ public class AnthropicChat(
             {
                 IsError = true,
                 ErrorMessage = ex.Message,
-                ModelProvider = "Anthropic",
-                ModelId = config.ModelId,
-                ModelName = config.Name
             };
         }
     }

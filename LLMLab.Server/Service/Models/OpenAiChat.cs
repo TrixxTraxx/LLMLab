@@ -68,6 +68,7 @@ public class OpenAiChat(
             }, cancellationToken);
 
             var inputTokens = 0;
+            var thinkingTokens = 0;
             var outputTokens = 0;
 
             //process the response
@@ -99,6 +100,8 @@ public class OpenAiChat(
                 if (update.Usage != null)
                 {
                     inputTokens = update.Usage.InputTokenCount;
+                    //no information from OpenAI based Apis
+                    thinkingTokens = 0;
                     outputTokens = update.Usage.OutputTokenCount;
                 }
             }
@@ -108,12 +111,7 @@ public class OpenAiChat(
             {
                 InputTokens = inputTokens,
                 OutputTokens = outputTokens,
-                Response = entity.ModelResponse,
-                IsError = false,
-                ModelName = config.Name,
-                ModelVersion = config.ModelId,
-                ModelProvider = "OpenAI",
-                ModelId = config.ModelId
+                IsError = false
             };
         }
         catch (Exception ex)
@@ -125,9 +123,9 @@ public class OpenAiChat(
             {
                 IsError = true,
                 ErrorMessage = ex.Message,
-                ModelProvider = "OpenAI",
-                ModelId = config.ModelId,
-                ModelName = config.Name
+                InputTokens = 0,
+                ThinkingTokens = 0,
+                OutputTokens = 0,
             };
         }
     }

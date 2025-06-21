@@ -92,6 +92,10 @@ public class OpenAiReasoningChat(
                     }
                 }
             });
+            
+            var inputTokens = 0;
+            var thinkingTokens = 0;
+            var outputTokens = 0;
 
             //process the response
             await foreach (var update in response)
@@ -157,19 +161,21 @@ public class OpenAiReasoningChat(
                         }
                     }
                 }
+                if (update is StreamingResponseCompletedUpdate usageUpdate)
+                {
+                    inputTokens = usageUpdate.Response.Usage.InputTokenCount;
+                    //no information from OpenAI based Apis
+                    thinkingTokens = 0;
+                    outputTokens = usageUpdate.Response.Usage.InputTokenCount;
+                }
             }
 
             //finalize the response
             return new ChatModelResponse()
             {
-                InputTokens = 0, // TODO: Get actual token usage from response
-                OutputTokens = 0, // TODO: Get actual token usage from response
-                Response = entity.ModelResponse,
+                InputTokens = inputTokens,
+                OutputTokens = outputTokens,
                 IsError = false,
-                ModelName = config.Name,
-                ModelVersion = config.ModelId,
-                ModelProvider = "OpenAI",
-                ModelId = config.ModelId
             };
         }
         catch (OperationCanceledException)
@@ -185,10 +191,7 @@ public class OpenAiReasoningChat(
             return new ChatModelResponse
             {
                 IsError = true,
-                ErrorMessage = ex.Message,
-                ModelProvider = "OpenAI",
-                ModelId = config.ModelId,
-                ModelName = config.Name
+                ErrorMessage = ex.Message
             };
         }
     }

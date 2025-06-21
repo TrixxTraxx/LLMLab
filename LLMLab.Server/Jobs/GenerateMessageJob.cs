@@ -122,7 +122,7 @@ public class GenerateMessageJob(
             message.Complete = true;
             await SaveChangesLockedAsync();
             
-            await SaveResultAsync(messageId, result);
+            await SaveResultAsync(message, result);
             
             // Only stop generation if there were no errors
             if (result == null || result.IsError)
@@ -246,45 +246,44 @@ public class GenerateMessageJob(
         }
     }
 
-    private async Task SaveResultAsync(int messageId, ChatModelResponse? result)
+    private async Task SaveResultAsync(Message message, ChatModelResponse? result)
     {
-        if (result == null)
-        {
-            Console.WriteLine($"No result to save for message {messageId}");
-            return;
-        }
-
         try
         {
-            var message = await dbContext.Messages.FirstOrDefaultAsync(m => m.Id == messageId);
-            if (message == null)
-            {
-                Console.WriteLine($"Message {messageId} not found when saving result");
-                return;
-            }
-
-            // Update message with response information if available
-            if (!string.IsNullOrEmpty(result.Response) && string.IsNullOrEmpty(message.ModelResponse))
-            {
-                message.ModelResponse = result.Response;
-            }
-
             // Save token usage and model information if needed
-            // TODO: Create a MessageResult or MessageMetadata table to store this information
-            Console.WriteLine($"Message {messageId} completed. Provider: {result.ModelProvider}, " +
-                            $"Model: {result.ModelId}, Input tokens: {result.InputTokens}, " +
-                            $"Output tokens: {result.OutputTokens}, Error: {result.IsError}");
-
-            if (result.IsError)
+            var metadata = new MessageMetadata()
             {
-                Console.WriteLine($"Message {messageId} generation error: {result.ErrorMessage}");
-            }
+                Message = message,
+                ModelId = message.Model.ModelId,
+                InputTokens = result?.InputTokens ?? 0,
+                ThinkingTokens = result?.ThinkingTokens ?? 0,
+                OutputTokens = result?.OutputTokens ?? 0,
+                TotalInputTokenCost = message.Model.InputTokenCost * ((result?.InputTokens ?? 0d) / 1000000d),
+                TotalThinkingTokenCost = message.Model.ThinkingCost * ((result?.ThinkingTokens ?? 0d) / 1000000d),
+                TotalOutputTokenCost = message.Model.OutputTokenCost * ((result?.OutputTokens ?? 0d) / 1000000d),
+                InputTokenCost = message.Model.InputTokenCost,
+                ThinkingTokenCost = message.Model.ThinkingCost,
+                OutputTokenCost = message.Model.OutputTokenCost,
+                ModelName = message.Model.Name,
+                ModelProvider = message.Model.Provider,
+                UserId = message.Thread.UserId,
+                CreatedAt = DateTime.UtcNow,
+                UsedUserApiKey = false,
+                ResponseTimeSeconds = (DateTime.UtcNow - message.CreatedAt).TotalSeconds,
+                HasError = result?.IsError ?? false,
+                ErrorMessage = result?.ErrorMessage ?? string.Empty
+            };
+            
+            metadata.TotalCost = metadata.TotalInputTokenCost + metadata.TotalThinkingTokenCost + metadata.TotalOutputTokenCost;
+            
+            dbContext.MessageMetadata.Add(metadata);
             
             await SaveChangesLockedAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error saving result for message {messageId}: {ex.Message}");
+            Console.WriteLine($"Error saving result for message {message.Id}");
+            Console.WriteLine(ex);
         }
     }
 

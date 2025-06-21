@@ -35,7 +35,7 @@ public class GoogleChat(
                         ReasoningEffortLevel.Medium => 4096,
                         ReasoningEffortLevel.High => 8192
                     }
-                }
+                },
             };
 
             // Build conversation content as simple text for now (due to API complexity)
@@ -85,7 +85,15 @@ public class GoogleChat(
                     });
                 }
             }
+            var result = new ChatModelResponse
+            {
+                InputTokens = 0,
+                ThinkingTokens = 0,
+                OutputTokens = 0,
+                IsError = false,
+            };
 
+            UsageMetadata? lastUsageMetadata = null;
             // Generate response using text approach (will implement proper content parts later)
             await foreach (var chunk in model.GenerateContentStream(parts, generationConfig, cancellationToken: cancellationToken))
             {
@@ -133,19 +141,13 @@ public class GoogleChat(
                         }
                     }
                 }
+                lastUsageMetadata = chunk.UsageMetadata;
             }
-
-            return new ChatModelResponse
-            {
-                InputTokens = 0, // TODO: Get actual token usage from response if available
-                OutputTokens = 0, // TODO: Get actual token usage from response if available
-                Response = entity.ModelResponse,
-                IsError = false,
-                ModelName = config.Name,
-                ModelVersion = config.ModelId,
-                ModelProvider = "Google",
-                ModelId = config.ModelId
-            };
+            result.InputTokens = lastUsageMetadata?.PromptTokenCount ?? 0;
+            result.ThinkingTokens = lastUsageMetadata?.ThoughtsTokenCount ?? 0;
+            result.OutputTokens = lastUsageMetadata?.CandidatesTokenCount ?? 0;
+            
+            return result;
         }
         catch (Exception ex)
         {
@@ -156,12 +158,8 @@ public class GoogleChat(
             {
                 IsError = true,
                 ErrorMessage = ex.Message,
-                Response = string.Empty,
                 InputTokens = 0,
-                OutputTokens = 0,
-                ModelProvider = "Google",
-                ModelId = config.ModelId,
-                ModelName = config.Name
+                OutputTokens = 0
             };
         }
     }

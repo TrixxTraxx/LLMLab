@@ -22,6 +22,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<AiModel> AiModels { get; set; }
     public DbSet<AiModelKeys> AiModelKeys { get; set; }
     public DbSet<SharedChat> SharedChats { get; set; }
+    public DbSet<MessageMetadata> MessageMetadata { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -54,6 +55,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 x => _provider.Encrypt(x),
                 x => _provider.Decrypt(x)
             );
+        
+        
+        builder.Entity<MessageMetadata>()
+            .HasOne(m => m.Message)
+            .WithMany()
+            .OnDelete(DeleteBehavior.NoAction);
         
         base.OnModelCreating(builder);
     }
