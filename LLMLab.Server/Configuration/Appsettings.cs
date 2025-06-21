@@ -23,4 +23,16 @@ public class Appsettings
     
     public string EncryptionKey { get; set; } = string.Empty;
     public string SystemPromptTemplate { get; set; }
+    
+    
+    public string StripeSecretKey { get; set; }
+    public string StripeWebhookSecret { get; set; }
+    
+    public Dictionary<string, int> CreditsPerPrice { get; set; } = new Dictionary<string, int>
+    {
+        { "5", 500 },
+        { "12", 1200 },
+        { "25", 2500 },
+        { "100", 10000 },
+    };
 }

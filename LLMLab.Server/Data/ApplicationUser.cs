@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
 
 namespace LLMLab.Server.Data;
@@ -15,5 +16,9 @@ public class ApplicationUser : IdentityUser
     public string UserSystemPrompt { get; set; } = string.Empty;
     public string[] UserSystemTraits { get; set; } = new string[0];
     
+    public int TotallyBoughtCredits { get; set; } = 0;
+    public int UsedCredits { get; set; } = 0;
+    [NotMapped]
+    public int AvailableCredits => TotallyBoughtCredits - UsedCredits;
 }
 

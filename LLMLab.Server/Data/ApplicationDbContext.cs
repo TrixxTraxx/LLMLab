@@ -1,5 +1,6 @@
 using LLMLab.Server.Configuration;
 using LLMLab.Server.Data.Encryption;
+using LLMLab.Server.Data.Payments;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -23,6 +24,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<AiModelKeys> AiModelKeys { get; set; }
     public DbSet<SharedChat> SharedChats { get; set; }
     public DbSet<MessageMetadata> MessageMetadata { get; set; }
+    
+    public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
