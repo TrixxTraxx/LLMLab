@@ -1,0 +1,89 @@
+@page "/CheckoutSuccess"
+@using LLMLab.Client.Services
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject CreditService CreditService
+
+<PageTitle>Payment Successful - LLMLab</PageTitle>
+
+<div class="checkout-success-container">
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="py-8">
+        <MudCard Elevation="4" Class="success-card">
+            <MudCardContent Class="text-center pa-8">
+                <div class="success-icon mb-4">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" 
+                             Color="Color.Success" 
+                             Style="font-size: 4rem;" />
+                </div>
+                
+                <MudText Typo="Typo.h4" Color="Color.Success" GutterBottom="true">
+                    Payment Successful!
+                </MudText>
+                
+                <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+                    Thank you for your purchase! Your tokens have been added to your account.
+                </MudText>
+                
+                @if (!string.IsNullOrEmpty(sessionId))
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
+                        Session ID: @sessionId
+                    </MudText>
+                }
+                
+                <div class="d-flex justify-center gap-4 mt-6">
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Chat"
+                               OnClick="GoToChat">
+                        Start Chatting
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.AccountBalanceWallet"
+                               OnClick="ViewBalance">
+                        View Balance
+                    </MudButton>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    </MudContainer>
+</div>
+
+@code {
+    private string? sessionId;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        // Get session_id from query parameters
+        var uri = new Uri(Navigation.Uri);
+        var query = uri.Query;
+        
+        if (query.Contains("session_id="))
+        {
+            var sessionIdStart = query.IndexOf("session_id=") + 11;
+            var sessionIdEnd = query.IndexOf("&", sessionIdStart);
+            if (sessionIdEnd == -1) sessionIdEnd = query.Length;
+            
+            sessionId = query.Substring(sessionIdStart, sessionIdEnd - sessionIdStart);
+        }
+        
+        // Show success message
+        Snackbar.Add("Payment processed successfully! Your tokens have been added to your account.", Severity.Success);
+        
+        // Auto-redirect after 10 seconds
+        await Task.Delay(10000);
+        Navigation.NavigateTo("/profile?tab=credits");
+    }
+    
+    private void GoToChat()
+    {
+        Navigation.NavigateTo("/");
+    }
+    
+    private void ViewBalance()
+    {
+        Navigation.NavigateTo("/profile?tab=credits");
+    }
+} 

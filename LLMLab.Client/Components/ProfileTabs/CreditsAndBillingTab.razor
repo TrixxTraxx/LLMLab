@@ -1,0 +1,280 @@
+@using LLMLab.Client.Services
+@using LLMLab.Dtos.User
+@using LLMLab.Client.Components.Common
+@inject NavigationManager Navigation
+@inject AppsettingsService AppsettingsService
+@inject CreditService CreditService
+@inject ISnackbar Snackbar
+
+<div class="billing-section">
+    <div class="billing-header">
+        <h2 class="section-title">Billing & Usage</h2>
+        <p class="section-subtitle">Manage your subscription and monitor your API usage</p>
+    </div>
+
+    @if (User != null)
+    {
+        <!-- Current Balance & Usage -->
+        <div class="balance-section">
+            <div class="balance-row">
+                <div class="balance-info">
+                    <div class="balance-label">
+                        <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet" Size="Size.Small" />
+                        <span>Current Balance</span>
+                    </div>
+                    @if (isLoadingBalance)
+                    {
+                        <div class="balance-loading">
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            <span>Loading...</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="balance-amount">@CurrentBalance.ToString("N0") tokens</div>
+                    }
+                </div>
+                
+                <div class="balance-actions">
+                    <MudButton Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Filled.History"
+                               OnClick="ViewTransactionHistory"
+                               Size="Size.Small"
+                               Class="history-btn">
+                        History
+                    </MudButton>
+                </div>
+            </div>
+            
+            @if (CurrentBalance < 100)
+            {
+                <div class="low-balance-warning">
+                    <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Color="Color.Warning" />
+                    <span>Your token balance is running low. Consider purchasing more tokens to continue using AI features.</span>
+                </div>
+            }
+        </div>
+
+        <!-- Subscription Plans -->
+        <div class="plans-section">
+            <div class="section-header">
+                <h3 class="plans-title">Token Plans</h3>
+                <p class="plans-subtitle">Choose the plan that fits your usage. No subscription required - pay as you go.</p>
+            </div>
+            
+            <div class="plans-grid">
+                @foreach (var plan in TokenPlans)
+                {
+                    <div class="plan-item @(plan.IsPopular ? "popular" : "")">
+                        @if (plan.IsPopular)
+                        {
+                            <div class="popular-badge">Most Popular</div>
+                        }
+                        
+                        <div class="plan-content">
+                            <div class="plan-header">
+                                <div class="plan-tokens">@plan.TokenAmount.ToString("N0")</div>
+                                <div class="plan-tokens-label">tokens</div>
+                            </div>
+                            
+                            <div class="plan-price">
+                                <span class="price-amount">€@plan.Price.ToString("F0")</span>
+                                <div class="price-per-token">€@((plan.Price / plan.TokenAmount * 1000).ToString("F3"))/1K tokens</div>
+                            </div>
+                            
+                            <div class="plan-features">
+                                <div class="feature">
+                                    <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
+                                    <span>~@plan.EstimatedChats chats</span>
+                                </div>
+                                <div class="feature">
+                                    <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
+                                    <span>Never expires</span>
+                                </div>
+                                <div class="feature">
+                                    <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
+                                    <span>No subscription</span>
+                                </div>
+                                @if (plan.BonusTokens > 0)
+                                {
+                                    <div class="feature bonus">
+                                        <MudIcon Icon="@Icons.Material.Filled.Star" Size="Size.Small" />
+                                        <span>+@plan.BonusTokens.ToString("N0") bonus</span>
+                                    </div>
+                                }
+                            </div>
+                            
+                            <MudButton Variant="@(plan.IsPopular ? Variant.Filled : Variant.Outlined)"
+                                       Color="Color.Primary"
+                                       OnClick="@(() => PurchaseTokens(plan))"
+                                       FullWidth="true"
+                                       Class="purchase-btn"
+                                       Disabled="isProcessingPurchase">
+                                @if (isProcessingPurchase)
+                                {
+                                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                                    <span>Processing...</span>
+                                }
+                                else
+                                {
+                                    <span>Purchase</span>
+                                }
+                            </MudButton>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+        
+        <!-- Security Info -->
+        <div class="security-section">
+            <div class="security-info">
+                <MudIcon Icon="@Icons.Material.Filled.Security" Size="Size.Small" />
+                <span>Secure payments powered by Stripe. Your payment information is encrypted and never stored on our servers.</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="loading-section">
+            <MudProgressCircular Indeterminate="true" Size="Size.Large" />
+            <span>Loading billing information...</span>
+        </div>
+    }
+</div>
+
+<!-- Transaction History Modal -->
+<TransactionHistoryModal @bind-IsVisible="showTransactionModal" />
+
+@code {
+    [CascadingParameter(Name = "User")] public UserDto? User { get; set; }
+    
+    public class TokenPlan
+    {
+        public int TokenAmount { get; set; }
+        public decimal Price { get; set; }
+        public int EstimatedChats { get; set; }
+        public int BonusTokens { get; set; }
+        public bool IsPopular { get; set; }
+        public string StripePrice { get; set; } = string.Empty;
+    }
+    
+    private int CurrentBalance = 0;
+    private bool isProcessingPurchase = false;
+    private bool isLoadingBalance = true;
+    
+    private List<TokenPlan> TokenPlans = new()
+    {
+        new TokenPlan 
+        { 
+            TokenAmount = 5, 
+            Price = 5.00m, 
+            EstimatedChats = 60, 
+            BonusTokens = 100, 
+            IsPopular = false,
+            StripePrice = "credits-500"
+        },
+        new TokenPlan 
+        { 
+            TokenAmount = 12, 
+            Price = 12.00m, 
+            EstimatedChats = 150, 
+            BonusTokens = 300, 
+            IsPopular = true,
+            StripePrice = "credits-1200"
+        },
+        new TokenPlan 
+        { 
+            TokenAmount = 25, 
+            Price = 25.00m, 
+            EstimatedChats = 300, 
+            BonusTokens = 500, 
+            IsPopular = false,
+            StripePrice = "credits-2500"
+        },
+        new TokenPlan 
+        { 
+            TokenAmount = 100, 
+            Price = 100.00m, 
+            EstimatedChats = 1200, 
+            BonusTokens = 2000, 
+            IsPopular = false,
+            StripePrice = "credits-10000"
+        }
+    };
+
+    private bool showTransactionModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCreditBalance();
+    }
+
+    private async Task LoadCreditBalance()
+    {
+        isLoadingBalance = true;
+        StateHasChanged();
+        
+        try
+        {
+            CurrentBalance = await CreditService.GetUserCreditBalance();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading credit balance: {ex.Message}");
+            Snackbar.Add("Failed to load credit balance", Severity.Warning);
+        }
+        finally
+        {
+            isLoadingBalance = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task PurchaseTokens(TokenPlan plan)
+    {
+        isProcessingPurchase = true;
+        StateHasChanged();
+        
+        try
+        {
+            // Calculate base credits (without bonus tokens)
+            var baseCredits = plan.TokenAmount;
+            
+            // Make POST request to the existing controller endpoint
+            var response = await CreditService.CreateCheckoutSession(baseCredits);
+            
+            if (!string.IsNullOrEmpty(response))
+            {
+                // Navigate to the Stripe checkout URL
+                Navigation.NavigateTo(response, forceLoad: true);
+            }
+            else
+            {
+                Snackbar.Add("Failed to create checkout session. Please try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initiating purchase: {ex.Message}");
+            Snackbar.Add("Failed to initiate purchase. Please try again.", Severity.Error);
+        }
+        finally
+        {
+            isProcessingPurchase = false;
+            StateHasChanged();
+        }
+    }
+    
+    private async Task ViewTransactionHistory()
+    {
+        showTransactionModal = true;
+        StateHasChanged();
+    }
+    
+    private void CloseTransactionModal()
+    {
+        showTransactionModal = false;
+        StateHasChanged();
+    }
+} 

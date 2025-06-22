@@ -1,0 +1,699 @@
+.credits-billing-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Balance Card Styling */
+.balance-card {
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-primary) 8%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-primary) 3%, transparent) 100%);
+    border: 1px solid color-mix(in srgb, var(--mud-palette-primary) 20%, transparent);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.balance-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.balance-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 0;
+}
+
+.balance-icon {
+    padding: 12px;
+    background: linear-gradient(135deg, var(--mud-palette-primary), color-mix(in srgb, var(--mud-palette-primary) 80%, white));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--mud-palette-primary) 30%, transparent);
+}
+
+.balance-info {
+    flex: 1;
+}
+
+.balance-amount {
+    font-weight: 700;
+    color: var(--mud-palette-primary);
+    margin-bottom: 4px;
+    font-size: 2.5rem;
+    line-height: 1.2;
+}
+
+.balance-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Token Plans Grid */
+.token-plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    padding: 16px 0;
+}
+
+.token-plan {
+    position: relative;
+    width: 100%;
+}
+
+.popular-plan {
+    transform: scale(1.05);
+    z-index: 2;
+}
+
+.popular-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--mud-palette-warning), color-mix(in srgb, var(--mud-palette-warning) 80%, white));
+    color: white;
+    padding: 4px 16px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--mud-palette-warning) 40%, transparent);
+    z-index: 3;
+}
+
+.plan-card {
+    height: 100%;
+    border-radius: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    border: 2px solid transparent;
+    background: var(--mud-palette-surface);
+}
+
+.popular-plan .plan-card {
+    border-color: var(--mud-palette-primary);
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-primary) 5%, var(--mud-palette-surface)) 0%,
+        var(--mud-palette-surface) 100%);
+}
+
+.plan-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.15);
+}
+
+.plan-content {
+    padding: 32px 24px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.plan-header {
+    text-align: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid color-mix(in srgb, var(--mud-palette-divider) 50%, transparent);
+}
+
+.plan-tokens {
+    font-weight: 800;
+    color: var(--mud-palette-primary);
+    font-size: 2.5rem;
+    line-height: 1.2;
+    margin-bottom: 4px;
+}
+
+.plan-price {
+    text-align: center;
+    padding: 16px 0;
+}
+
+.price {
+    font-weight: 700;
+    font-size: 3rem;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.plan-features {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+.feature-item.bonus {
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-warning) 10%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-warning) 5%, transparent) 100%);
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid color-mix(in srgb, var(--mud-palette-warning) 20%, transparent);
+}
+
+.plan-action {
+    margin-top: auto;
+    padding-top: 16px;
+}
+
+.purchase-btn {
+    height: 48px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.purchase-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--mud-palette-primary) 40%, transparent);
+}
+
+/* Security Info */
+.security-info-card {
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--mud-palette-success) 5%, transparent) 0%,
+        color-mix(in srgb, var(--mud-palette-success) 2%, transparent) 100%);
+    border: 1px solid color-mix(in srgb, var(--mud-palette-success) 20%, transparent);
+    border-radius: 12px;
+}
+
+.security-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+/* Loading Container */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 16px;
+    text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .token-plans-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .popular-plan {
+        transform: none;
+    }
+    
+    .balance-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+    }
+    
+    .balance-actions {
+        justify-content: center;
+    }
+    
+    .plan-content {
+        padding: 24px 16px;
+    }
+    
+    .plan-tokens {
+        font-size: 2rem;
+    }
+    
+    .price {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .credits-billing-container {
+        padding: 0 8px;
+    }
+    
+    .plan-tokens {
+        font-size: 1.8rem;
+    }
+    
+    .price {
+        font-size: 2rem;
+    }
+    
+    .balance-amount {
+        font-size: 2rem;
+    }
+}
+
+/* Animation for cards */
+@keyframes cardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.balance-card,
+.plans-card,
+.security-info-card {
+    animation: cardSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.plans-card {
+    animation-delay: 0.2s;
+}
+
+.security-info-card {
+    animation-delay: 0.4s;
+}
+
+/* Individual plan card animations */
+.token-plan:nth-child(1) .plan-card {
+    animation: cardSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.3s;
+}
+
+.token-plan:nth-child(2) .plan-card {
+    animation: cardSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.4s;
+}
+
+.token-plan:nth-child(3) .plan-card {
+    animation: cardSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.5s;
+}
+
+.token-plan:nth-child(4) .plan-card {
+    animation: cardSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.6s;
+}
+
+.billing-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 100%;
+    color: var(--mud-palette-text-primary);
+    min-height: 0;
+    overflow: visible;
+}
+
+/* Header Section */
+.billing-header {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--mud-palette-divider);
+    flex-shrink: 0;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: var(--mud-palette-text-primary);
+}
+
+.section-subtitle {
+    font-size: 0.875rem;
+    color: var(--mud-palette-text-secondary);
+    margin: 0;
+}
+
+/* Balance Section */
+.balance-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--mud-palette-surface);
+    border: 1px solid var(--mud-palette-divider);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.balance-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.balance-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.balance-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--mud-palette-text-secondary);
+}
+
+.balance-amount {
+    font-size: 1.375rem;
+    font-weight: 600;
+    color: var(--mud-palette-text-primary);
+}
+
+.balance-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--mud-palette-text-secondary);
+    font-size: 0.875rem;
+}
+
+.balance-actions {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.history-btn {
+    color: var(--mud-palette-primary) !important;
+    font-weight: 500 !important;
+}
+
+.low-balance-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    border-radius: 6px;
+    color: var(--mud-palette-warning);
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+/* Plans Section */
+.plans-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.section-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.plans-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--mud-palette-text-primary);
+}
+
+.plans-subtitle {
+    font-size: 0.875rem;
+    color: var(--mud-palette-text-secondary);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+    width: 100%;
+}
+
+.plan-item {
+    position: relative;
+    border: 1px solid var(--mud-palette-divider);
+    border-radius: 8px;
+    background: var(--mud-palette-surface);
+    transition: all 0.2s ease;
+    min-height: 0;
+    overflow: visible;
+}
+
+.plan-item:hover {
+    border-color: var(--mud-palette-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.plan-item.popular {
+    border-color: var(--mud-palette-primary);
+    box-shadow: 0 2px 8px rgba(var(--mud-palette-primary-rgb), 0.2);
+}
+
+.popular-badge {
+    position: absolute;
+    top: -1px;
+    right: 1rem;
+    background: var(--mud-palette-primary);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0 0 6px 6px;
+    z-index: 2;
+}
+
+.plan-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    height: 100%;
+    min-height: 300px;
+}
+
+.plan-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.plan-tokens {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--mud-palette-text-primary);
+}
+
+.plan-tokens-label {
+    font-size: 0.8rem;
+    color: var(--mud-palette-text-secondary);
+}
+
+.plan-price {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.price-amount {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--mud-palette-primary);
+}
+
+.price-per-token {
+    font-size: 0.7rem;
+    color: var(--mud-palette-text-secondary);
+}
+
+.plan-features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--mud-palette-text-primary);
+}
+
+.feature.bonus {
+    color: var(--mud-palette-warning);
+    font-weight: 500;
+}
+
+.purchase-btn {
+    margin-top: auto;
+    font-weight: 500 !important;
+    padding: 0.75rem !important;
+    border-radius: 6px !important;
+    flex-shrink: 0;
+}
+
+/* Security Section */
+.security-section {
+    padding: 1rem;
+    background: rgba(var(--mud-palette-success-rgb), 0.1);
+    border: 1px solid rgba(var(--mud-palette-success-rgb), 0.2);
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.security-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--mud-palette-text-secondary);
+    line-height: 1.4;
+}
+
+/* Loading Section */
+.loading-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 3rem;
+    color: var(--mud-palette-text-secondary);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .billing-section {
+        gap: 1.25rem;
+    }
+    
+    .balance-section {
+        padding: 1rem;
+    }
+    
+    .balance-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .balance-actions {
+        align-self: flex-end;
+    }
+    
+    .plans-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .plan-content {
+        padding: 1rem;
+        gap: 1rem;
+        min-height: 250px;
+    }
+    
+    .plan-tokens {
+        font-size: 1.5rem;
+    }
+    
+    .price-amount {
+        font-size: 1.25rem;
+    }
+    
+    .section-title {
+        font-size: 1.125rem;
+    }
+    
+    .plans-title {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .billing-section {
+        gap: 1rem;
+    }
+    
+    .balance-section,
+    .plan-content {
+        padding: 0.875rem;
+    }
+    
+    .balance-row {
+        gap: 0.75rem;
+    }
+    
+    .balance-amount {
+        font-size: 1.25rem;
+    }
+    
+    .plan-content {
+        min-height: 220px;
+        gap: 0.875rem;
+    }
+    
+    .plan-tokens {
+        font-size: 1.375rem;
+    }
+    
+    .price-amount {
+        font-size: 1.125rem;
+    }
+    
+    .popular-badge {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.5rem;
+    }
+    
+    .section-title {
+        font-size: 1rem;
+    }
+    
+    .plans-title {
+        font-size: 0.95rem;
+    }
+    
+    .security-info {
+        font-size: 0.75rem;
+    }
+    
+    .plans-grid {
+        grid-template-columns: 1fr;
+        gap: 0.875rem;
+    }
+}
+
+/* Dark theme adjustments */
+@media (prefers-color-scheme: dark) {
+    .plan-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .plan-item.popular {
+        box-shadow: 0 2px 8px rgba(var(--mud-palette-primary-rgb), 0.3);
+    }
+} 

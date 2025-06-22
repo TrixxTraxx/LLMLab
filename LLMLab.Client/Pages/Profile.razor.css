@@ -1,8 +1,181 @@
 .profile-page {
+    display: flex;
+    flex-direction: column;
     min-height: 100vh;
-    max-height: 100vh;
     background: var(--mud-palette-background);
+    color: var(--mud-palette-text-primary);
+    padding: 0;
+    margin: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.profile-header {
+    padding: 1.5rem 2rem 1rem 2rem;
+    border-bottom: 1px solid var(--mud-palette-divider);
+    flex-shrink: 0;
+}
+
+.profile-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    color: var(--mud-palette-text-primary);
+}
+
+.profile-subtitle {
+    font-size: 0.875rem;
+    color: var(--mud-palette-text-secondary);
+    margin: 0;
+}
+
+.profile-navigation {
+    display: flex;
+    border-bottom: 1px solid var(--mud-palette-divider);
+    margin: 0 2rem;
+    gap: 0;
+    flex-shrink: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--mud-palette-text-secondary);
+    white-space: nowrap;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.nav-item:hover {
+    color: var(--mud-palette-text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-item.active {
+    color: var(--mud-palette-primary);
+    border-bottom-color: var(--mud-palette-primary);
+    background: rgba(var(--mud-palette-primary-rgb), 0.08);
+}
+
+.nav-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-content {
+    flex: 1;
+    padding: 1.5rem 2rem;
+    max-width: 100%;
     overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+}
+
+/* Mobile Responsiveness - Fix overlap and layout issues */
+@media (max-width: 768px) {
+    .profile-header {
+        padding: 1rem;
+    }
+    
+    .profile-navigation {
+        margin: 0 1rem;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .profile-navigation::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .nav-item {
+        padding: 0.625rem 0.75rem;
+        font-size: 0.8rem;
+        min-width: max-content;
+    }
+    
+    .profile-content {
+        padding: 1rem;
+    }
+    
+    .profile-title {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-header {
+        padding: 0.75rem;
+    }
+    
+    .profile-navigation {
+        margin: 0 0.75rem;
+        border-bottom: 1px solid var(--mud-palette-divider);
+    }
+    
+    .nav-item {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+        gap: 0.25rem;
+    }
+    
+    .nav-item span {
+        display: none;
+    }
+    
+    .nav-item:first-child span,
+    .nav-item.active span {
+        display: inline;
+    }
+    
+    .profile-content {
+        padding: 0.75rem;
+    }
+    
+    .profile-title {
+        font-size: 1.125rem;
+    }
+}
+
+/* Ensure scrolling works properly */
+.profile-page * {
+    box-sizing: border-box;
+}
+
+/* Remove any potential scroll blocking */
+.profile-content > * {
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
+
+/* Fix z-index conflicts */
+.profile-page {
+    position: relative;
+    z-index: 1;
+}
+
+.profile-header,
+.profile-navigation,
+.profile-content {
+    position: relative;
+    z-index: auto;
+}
+
+/* Ensure content doesn't get clipped */
+.profile-content {
+    contain: layout;
 }
 
 .profile-container {
@@ -173,53 +346,6 @@
 .custom-theme-section {
     width: 100%;
     transition: all 0.3s ease;
-}
-
-@media (max-width: 768px) {
-    .theme-grid {
-        justify-content: center;
-        min-height: 176px; /* 2 rows: (80px * 2) + (16px gap) */
-    }
-    
-    .color-input-grid {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-    
-    .theme-selector {
-        width: 120px;
-        height: 80px;
-    }
-    
-    .profile-section {
-        padding: 0.75rem;
-    }
-    
-    .profile-container {
-        padding-right: 4px;
-    }
-    
-    .scrollable-panel {
-        max-height: calc(100vh - 160px);
-        padding-right: 4px;
-    }
-}
-
-@media (max-width: 480px) {
-    .color-input-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .theme-grid {
-        justify-content: center;
-        min-height: 336px; /* 4 rows for small screens */
-        gap: 0.75rem;
-    }
-    
-    .theme-selector {
-        width: 110px;
-        height: 75px;
-    }
 }
 
 .mud-tabs .mud-tab-panel {

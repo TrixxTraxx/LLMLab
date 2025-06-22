@@ -1,0 +1,69 @@
+@page "/CheckoutCanceled"
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Payment Canceled - LLMLab</PageTitle>
+
+<div class="checkout-canceled-container">
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="py-8">
+        <MudCard Elevation="4" Class="canceled-card">
+            <MudCardContent Class="text-center pa-8">
+                <div class="canceled-icon mb-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Cancel" 
+                             Color="Color.Warning" 
+                             Style="font-size: 4rem;" />
+                </div>
+                
+                <MudText Typo="Typo.h4" Color="Color.Warning" GutterBottom="true">
+                    Payment Canceled
+                </MudText>
+                
+                <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+                    Your payment was canceled. No charges were made to your account.
+                </MudText>
+                
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+                    You can try again anytime or continue using any existing tokens in your account.
+                </MudText>
+                
+                <div class="d-flex justify-center gap-4 mt-6">
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.ShoppingCart"
+                               OnClick="TryAgain">
+                        Try Again
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Home"
+                               OnClick="GoHome">
+                        Go Home
+                    </MudButton>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    </MudContainer>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // Show info message
+        Snackbar.Add("Payment was canceled. No charges were made.", Severity.Info);
+        
+        // Auto-redirect after 8 seconds
+        await Task.Delay(8000);
+        Navigation.NavigateTo("/profile?tab=credits");
+    }
+    
+    private void TryAgain()
+    {
+        Navigation.NavigateTo("/profile?tab=credits");
+    }
+    
+    private void GoHome()
+    {
+        Navigation.NavigateTo("/");
+    }
+} 

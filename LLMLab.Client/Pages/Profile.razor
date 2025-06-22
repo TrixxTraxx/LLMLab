@@ -7,30 +7,88 @@
 <PageTitle>Profile - LLM Lab</PageTitle>
 
 <div class="profile-page">
-    <div class="profile-container">
-        <MudContainer MaxWidth="MaxWidth.Large" Class="py-6">
-            <div class="d-flex justify-center align-center mb-6">
-                <MudText Typo="Typo.h4" GutterBottom="true">
-                    Settings
-                </MudText>
+    <div class="profile-header">
+        <h1 class="profile-title">Account Settings</h1>
+        <p class="profile-subtitle">Manage your account, billing, and preferences</p>
+    </div>
+    
+    <div class="profile-navigation">
+        <div class="nav-item @(activeTab == "billing" ? "active" : "")" @onclick='() => SetActiveTab("billing")'>
+            <div class="nav-icon">
+                <MudIcon Icon="@Icons.Material.Filled.CreditCard" Size="Size.Small" />
             </div>
-            
-            <MudTabs Elevation="4" Rounded="true" PanelClass="pa-6" Class="mt-4">
-                <MudTabPanel Text="Profile" Icon="@Icons.Material.Filled.Person">
-                    <ProfileManagementTab />
-                </MudTabPanel>
-                
-                <MudTabPanel Text="API Keys" Icon="@Icons.Material.Filled.Key">
-                    <AiKeysManagementTab />
-                </MudTabPanel>
-                
-                <MudTabPanel Text="Theme" Icon="@Icons.Material.Filled.Palette">
-                    <ThemeSettingsTab />
-                </MudTabPanel>
-            </MudTabs>
-        </MudContainer>
+            <span>Billing & Usage</span>
+        </div>
+        
+        <div class="nav-item @(activeTab == "account" ? "active" : "")" @onclick='() => SetActiveTab("account")'>
+            <div class="nav-icon">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+            </div>
+            <span>Account</span>
+        </div>
+        
+        <div class="nav-item @(activeTab == "api" ? "active" : "")" @onclick='() => SetActiveTab("api")'>
+            <div class="nav-icon">
+                <MudIcon Icon="@Icons.Material.Filled.Key" Size="Size.Small" />
+            </div>
+            <span>API Keys</span>
+        </div>
+        
+        <div class="nav-item @(activeTab == "preferences" ? "active" : "")" @onclick='() => SetActiveTab("preferences")'>
+            <div class="nav-icon">
+                <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Small" />
+            </div>
+            <span>Preferences</span>
+        </div>
+    </div>
+    
+    <div class="profile-content">
+        @if (activeTab == "billing")
+        {
+            <CreditsAndBillingTab />
+        }
+        else if (activeTab == "account")
+        {
+            <ProfileManagementTab />
+        }
+        else if (activeTab == "api")
+        {
+            <AiKeysManagementTab />
+        }
+        else if (activeTab == "preferences")
+        {
+            <ThemeSettingsTab />
+        }
     </div>
 </div>
 
 @code {
+    private string activeTab = "billing";
+    
+    protected override void OnInitialized()
+    {
+        // Check URL parameters to set initial tab
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = uri.Query;
+        
+        if (query.Contains("tab="))
+        {
+            var tabStart = query.IndexOf("tab=") + 4;
+            var tabEnd = query.IndexOf("&", tabStart);
+            if (tabEnd == -1) tabEnd = query.Length;
+            
+            var tab = query.Substring(tabStart, tabEnd - tabStart);
+            if (new[] { "billing", "account", "api", "preferences" }.Contains(tab))
+            {
+                activeTab = tab;
+            }
+        }
+    }
+    
+    private void SetActiveTab(string tab)
+    {
+        activeTab = tab;
+        Navigation.NavigateTo($"/profile?tab={tab}", replace: true);
+        StateHasChanged();
+    }
 } 

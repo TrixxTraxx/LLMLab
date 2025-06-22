@@ -1,0 +1,149 @@
+@using LLMLab.Client.Services
+@using LLMLab.Client.Models
+@inject CreditService CreditService
+@inject ISnackbar Snackbar
+
+<MudDialog @bind-Visible="@IsVisible"
+           Options="@_dialogOptions">
+    <DialogContent>
+        <div class="transaction-history-modal">
+            <div class="modal-header">
+                <MudText Typo="Typo.h6">Transaction History</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    View your recent credit purchases and usage
+                </MudText>
+            </div>
+            
+            @if (isLoading)
+            {
+                <div class="loading-section">
+                    <MudProgressCircular Indeterminate="true" />
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                        Loading transactions...
+                    </MudText>
+                </div>
+            }
+            else if (transactions != null && transactions.Any())
+            {
+                <div class="transactions-list">
+                    @foreach (var transaction in transactions)
+                    {
+                        <div class="transaction-item">
+                            <div class="transaction-icon">
+                                <MudIcon Icon="@GetTransactionIcon(transaction.Type)" 
+                                         Color="@GetTransactionColor(transaction.Type)" />
+                            </div>
+                            <div class="transaction-details">
+                                <MudText Typo="Typo.body1" Class="transaction-description">
+                                    @transaction.Description
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @transaction.CreatedAt.ToString("MMM dd, yyyy 'at' h:mm tt")
+                                </MudText>
+                            </div>
+                            <div class="transaction-amount">
+                                <MudText Typo="Typo.body1" 
+                                         Color="@(transaction.Type == "Purchase" ? Color.Success : Color.Default)"
+                                         Class="amount-text">
+                                    @(transaction.Type == "Purchase" ? "+" : "-")@transaction.Amount.ToString("N0")
+                                </MudText>
+                                @if (transaction.Price.HasValue)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        €@transaction.Price.Value.ToString("F2")
+                                    </MudText>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="no-transactions">
+                    <MudIcon Icon="@Icons.Material.Filled.Receipt" Size="Size.Large" Color="Color.Secondary" />
+                    <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mt-2">
+                        No Transactions Yet
+                    </MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Your transaction history will appear here once you make your first purchase.
+                    </MudText>
+                </div>
+            }
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close" Color="Color.Primary">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+    
+    private List<CreditTransaction>? transactions;
+    private bool isLoading = true;
+    
+    private DialogOptions _dialogOptions = new()
+    {
+        MaxWidth = MaxWidth.Medium,
+        FullWidth = true
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsVisible && transactions == null)
+        {
+            await LoadTransactions();
+        }
+    }
+
+    private async Task LoadTransactions()
+    {
+        isLoading = true;
+        StateHasChanged();
+        
+        try
+        {
+            transactions = await CreditService.GetTransactionHistory();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading transactions: {ex.Message}");
+            Snackbar.Add("Failed to load transaction history", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetTransactionIcon(string type)
+    {
+        return type switch
+        {
+            "Purchase" => Icons.Material.Filled.ShoppingCart,
+            "Deduction" => Icons.Material.Filled.RemoveCircle,
+            "Bonus" => Icons.Material.Filled.Star,
+            _ => Icons.Material.Filled.Receipt
+        };
+    }
+
+    private Color GetTransactionColor(string type)
+    {
+        return type switch
+        {
+            "Purchase" => Color.Success,
+            "Deduction" => Color.Error,
+            "Bonus" => Color.Warning,
+            _ => Color.Default
+        };
+    }
+
+    private async Task Close() 
+    {
+        IsVisible = false;
+        await IsVisibleChanged.InvokeAsync(false);
+    }
+} 
