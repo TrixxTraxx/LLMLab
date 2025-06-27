@@ -39,7 +39,8 @@ public class AddCreditsJob(
                     TotalBoughtCreditsBefore = user.TotallyBoughtCredits,
                     BoughtCredits = receivedCredits,
                     SessionId = sessionId,
-                    TimestampUtc = DateTime.UtcNow
+                    TimestampUtc = DateTime.UtcNow,
+                    UserId = user.Id
                 };
                 
                 user.TotallyBoughtCredits += receivedCredits;

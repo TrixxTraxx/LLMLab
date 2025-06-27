@@ -103,23 +103,29 @@
                                     </div>
                                 }
                             </div>
-                            
-                            <MudButton Variant="@(plan.IsPopular ? Variant.Filled : Variant.Outlined)"
-                                       Color="Color.Primary"
-                                       OnClick="@(() => PurchaseTokens(plan))"
-                                       FullWidth="true"
-                                       Class="purchase-btn"
-                                       Disabled="isProcessingPurchase">
-                                @if (isProcessingPurchase)
-                                {
-                                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
-                                    <span>Processing...</span>
-                                }
-                                else
-                                {
-                                    <span>Purchase</span>
-                                }
-                            </MudButton>
+
+                            <form action="@(AppsettingsService.ServerUrl)/create-checkout-session/@(plan.TokenAmount)" method="post">
+                                <!-- Hidden input to send the price/plan identifier -->
+                                <!-- Using the StripePrice property you already have -->
+                                <input type="hidden" name="lookupKey" value="@plan.StripePrice" />
+
+                                <MudButton ButtonType="ButtonType.Submit"
+                                           Variant="@(plan.IsPopular ? Variant.Filled : Variant.Outlined)"
+                                           Color="Color.Primary"
+                                           FullWidth="true"
+                                           Class="purchase-btn"
+                                           Disabled="isProcessingPurchase">
+                                    @if (isProcessingPurchase)
+                                    {
+                                        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                                        <span>Processing...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Purchase</span>
+                                    }
+                                </MudButton>
+                            </form>
                         </div>
                     </div>
                 }
